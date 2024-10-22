@@ -1,45 +1,59 @@
-package com.example.pennykeeper.navigation
+package com.example.pennykeeper.ui.navigation
+
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Settings
-import com.example.pennykeeper.home.HomeScreen
-import com.example.pennykeeper.stats.StatisticsScreen
-import com.example.pennykeeper.settings.SettingsScreen
+import com.example.pennykeeper.ui.home.HomeScreen
+import com.example.pennykeeper.ui.home.HomeViewModel
+import com.example.pennykeeper.ui.stats.StatisticsScreen
+import com.example.pennykeeper.ui.stats.StatisticsViewModel
+import com.example.pennykeeper.ui.settings.SettingsScreen
+import com.example.pennykeeper.data.repository.ExpenseRepository
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Navigation() {
+fun Navigation(expenseRepository: ExpenseRepository) {
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
         NavHost(navController, startDestination = "home", Modifier.padding(innerPadding)) {
-            composable("home") { HomeScreen() }
-            composable("statistics") { StatisticsScreen() }
+            composable("home") {
+                val homeViewModel: HomeViewModel = viewModel { HomeViewModel(expenseRepository) }
+                HomeScreen(homeViewModel)
+            }
+            composable("statistics") {
+                val statisticsViewModel: StatisticsViewModel = viewModel { StatisticsViewModel(expenseRepository) }
+                StatisticsScreen(statisticsViewModel)
+            }
             composable("settings") { SettingsScreen() }
         }
     }
 }
 
+// BottomNavigationBar implementation remains the same
+
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
         BottomNavItem("home", "Home", Icons.Default.Home),
-        BottomNavItem("statistics", "Statistics", Icons.Default.List),
+        BottomNavItem("statistics", "Statistics", Icons.AutoMirrored.Filled.List),
         BottomNavItem("settings", "Settings", Icons.Default.Settings)
     )
     NavigationBar {

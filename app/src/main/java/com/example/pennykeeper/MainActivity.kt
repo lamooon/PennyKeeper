@@ -1,26 +1,22 @@
 package com.example.pennykeeper
 
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.pennykeeper.navigation.Navigation
+import com.example.pennykeeper.ui.navigation.Navigation
 import com.example.pennykeeper.ui.theme.PennykeeperTheme
+import com.example.pennykeeper.data.repository.ExpenseRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        val expenseRepository = ExpenseRepository()
+
         setContent {
-            PennykeeperTheme {
-                Navigation()
+            PennykeeperTheme() {
+                Navigation(expenseRepository)
             }
         }
     }
