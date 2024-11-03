@@ -1,20 +1,9 @@
 package com.example.pennykeeper.data.model
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-import java.util.Date
-
-data class Expense(
-    val id: Int,
-    val amount: Double,
-    val place: String,
-    val category: ExpenseCategory,
-    val date: Date
+@Entity(tableName = "settings")
+data class Settings (
+    @PrimaryKey val id: Int = 1, // Singleton pattern
+    val budget: Double
 )
-
-enum class ExpenseCategory {
-    GROCERIES,
-    SUBSCRIPTIONS,
-    TAXES,
-    ENTERTAINMENT,
-    UTILITIES,
-    OTHER
-}
