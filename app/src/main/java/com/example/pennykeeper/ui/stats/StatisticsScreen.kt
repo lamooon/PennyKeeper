@@ -21,6 +21,9 @@ fun StatisticsScreen(statisticsViewModel: StatisticsViewModel) {
     val expensesByCategory by statisticsViewModel.expensesByCategory.collectAsState()
     val totalExpenses by statisticsViewModel.totalExpenses.collectAsState()
     val selectedTimeRange by statisticsViewModel.selectedTimeRange.collectAsState()
+    val budget by statisticsViewModel.budgetFlow.collectAsState()
+    val amountOverBudget by statisticsViewModel.amountOverBudget.collectAsState()
+    val isOverBudget by statisticsViewModel.isOverBudget.collectAsState()
 
     Column(
         modifier = Modifier
@@ -50,7 +53,7 @@ fun StatisticsScreen(statisticsViewModel: StatisticsViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Total expenses
+        // Total expenses and current budget
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp)
@@ -59,15 +62,52 @@ fun StatisticsScreen(statisticsViewModel: StatisticsViewModel) {
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Total Expenses",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "$${String.format("%.2f", totalExpenses)}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Total Expenses Section
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Total Expenses",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "$${String.format("%.2f", totalExpenses)}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = if (isOverBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    // Current Budget Section
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Current Budget",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "$${String.format("%.2f", budget)}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Over Budget Indicator
+                if (isOverBudget) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "You've exceeded your budget by $${String.format("%.2f", amountOverBudget)}",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
 
@@ -175,13 +215,14 @@ fun ExpenseSummary(expensesByCategory: Map<ExpenseCategory, Double>) {
     }
 }
 
+
 fun getCategoryColor(category: ExpenseCategory): Color {
     return when (category) {
-        ExpenseCategory.GROCERIES -> Color(0xFF4CAF50)
-        ExpenseCategory.SUBSCRIPTIONS -> Color(0xFF2196F3)
-        ExpenseCategory.TAXES -> Color(0xFFF44336)
-        ExpenseCategory.ENTERTAINMENT -> Color(0xFFFFEB3B)
-        ExpenseCategory.UTILITIES -> Color(0xFF00BCD4)
-        ExpenseCategory.OTHER -> Color(0xFF9E9E9E)
+        ExpenseCategory.GROCERIES -> Color(0xFFAED581)       // Pastel Green
+        ExpenseCategory.SUBSCRIPTIONS -> Color(0xFF81D4FA)   // Pastel Blue
+        ExpenseCategory.TAXES -> Color(0xFFFF8A80)           // Pastel Red
+        ExpenseCategory.ENTERTAINMENT -> Color(0xFFCE93D8)   // Pastel Purple
+        ExpenseCategory.UTILITIES -> Color(0xFFFFF176)       // Pastel Yellow
+        ExpenseCategory.OTHER -> Color(0x8BEEEEEE)           // Light Grey
     }
 }

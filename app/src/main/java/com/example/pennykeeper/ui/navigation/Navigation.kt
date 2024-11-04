@@ -60,7 +60,7 @@ fun Navigation(expenseRepository: ExpenseRepository) {
                 HomeScreen(homeViewModel)
             }
             composable("statistics") {
-                val statisticsViewModel: StatisticsViewModel = viewModel { StatisticsViewModel(expenseRepository) }
+                val statisticsViewModel: StatisticsViewModel = viewModel { StatisticsViewModel(expenseRepository,settingsRepository) }
                 StatisticsScreen(statisticsViewModel)
             }
             composable("settings") {
