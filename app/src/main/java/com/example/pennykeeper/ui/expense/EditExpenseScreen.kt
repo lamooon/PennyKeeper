@@ -26,6 +26,8 @@ fun EditExpenseScreen(
         viewModel.loadExpense(expenseId)
     }
 
+    var categoryExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,75 +72,81 @@ fun EditExpenseScreen(
             )
 
             ExposedDropdownMenuBox(
-                expanded = false,
-                onExpandedChange = { },
+                expanded = categoryExpanded,
+                onExpandedChange = { categoryExpanded = it },
             ) {
                 OutlinedTextField(
                     value = viewModel.category.name,
                     onValueChange = { },
                     readOnly = true,
                     label = { Text("Category") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
                 )
 
-                DropdownMenu(
-                    expanded = false,
-                    onDismissRequest = { }
+                ExposedDropdownMenu(
+                    expanded = categoryExpanded,
+                    onDismissRequest = { categoryExpanded = false }
                 ) {
                     ExpenseCategory.values().forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name) },
-                            onClick = { viewModel.updateCategory(category) }
+                            onClick = {
+                                viewModel.updateCategory(category)
+                                categoryExpanded = false
+                            }
                         )
                     }
                 }
+            }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Recurring Expense")
+                Switch(
+                    checked = viewModel.isRecurring,
+                    onCheckedChange = { viewModel.updateRecurring(it) }
+                )
+            }
+
+            if (viewModel.isRecurring) {
+                var periodExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = periodExpanded,
+                    onExpandedChange = { periodExpanded = it },
                 ) {
-                    Text("Recurring Expense")
-                    Switch(
-                        checked = viewModel.isRecurring,
-                        onCheckedChange = { viewModel.updateRecurring(it) }
+                    OutlinedTextField(
+                        value = viewModel.recurringPeriod?.name ?: "Select Period",
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("Recurring Period") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
                     )
-                }
 
-                //only if recurring
-                if (viewModel.isRecurring) {
-                    var expanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it },
+                    ExposedDropdownMenu(
+                        expanded = periodExpanded,
+                        onDismissRequest = { periodExpanded = false }
                     ) {
-                        OutlinedTextField(
-                            value = viewModel.recurringPeriod?.name ?: "Select Period",
-                            onValueChange = { },
-                            readOnly = true,
-                            label = { Text("Recurring Period") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            RecurringPeriod.values().forEach { period ->
-                                DropdownMenuItem(
-                                    text = { Text(period.name) },
-                                    onClick = {
-                                        viewModel.updateRecurringPeriod(period)
-                                        expanded = false
-                                    }
-                                )
-                            }
+                        RecurringPeriod.values().forEach { period ->
+                            DropdownMenuItem(
+                                text = { Text(period.name) },
+                                onClick = {
+                                    viewModel.updateRecurringPeriod(period)
+                                    periodExpanded = false
+                                }
+                            )
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { viewModel.saveExpense(onNavigateBack) },
