@@ -18,15 +18,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
 import com.example.pennykeeper.ui.stats.StatisticsScreen
 import com.example.pennykeeper.ui.stats.StatisticsViewModel
 import com.example.pennykeeper.ui.settings.SettingsScreen
 import com.example.pennykeeper.data.repository.ExpenseRepository
+import com.example.pennykeeper.ui.expense.EditExpenseScreen
+import com.example.pennykeeper.ui.expense.EditExpenseViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigation(expenseRepository: ExpenseRepository) {
     val navController = rememberNavController()
@@ -36,18 +39,40 @@ fun Navigation(expenseRepository: ExpenseRepository) {
         NavHost(navController, startDestination = "home", Modifier.padding(innerPadding)) {
             composable("home") {
                 val homeViewModel: HomeViewModel = viewModel { HomeViewModel(expenseRepository) }
-                HomeScreen(homeViewModel)
+                HomeScreen(
+                    homeViewModel = homeViewModel,
+                    onNavigateToEdit = { expenseId ->
+                        navController.navigate("edit/$expenseId")
+                    }
+                )
+            }
+            composable(
+                route = "edit/{expenseId}",
+                arguments = listOf(navArgument("expenseId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val expenseId = backStackEntry.arguments?.getInt("expenseId") ?: return@composable
+                val editViewModel: EditExpenseViewModel = viewModel {
+                    EditExpenseViewModel(expenseRepository)
+                }
+                EditExpenseScreen(
+                    viewModel = editViewModel,
+                    expenseId = expenseId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
             composable("statistics") {
-                val statisticsViewModel: StatisticsViewModel = viewModel { StatisticsViewModel(expenseRepository) }
+                val statisticsViewModel: StatisticsViewModel = viewModel {
+                    StatisticsViewModel(expenseRepository)
+                }
                 StatisticsScreen(statisticsViewModel)
             }
-            composable("settings") { SettingsScreen() }
+            composable("settings") {
+                SettingsScreen()
+            }
         }
     }
 }
 
-// BottomNavigationBar implementation remains the same
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
