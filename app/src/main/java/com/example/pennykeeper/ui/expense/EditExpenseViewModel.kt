@@ -7,8 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.RecurringPeriod
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.Date
 
 class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() {
@@ -23,6 +25,10 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
         private set
     var date by mutableStateOf(Date())
         private set
+    var isRecurring by mutableStateOf(false)
+        private set
+    var recurringPeriod by mutableStateOf<RecurringPeriod?>(null)
+        private set
 
     fun loadExpense(id: Int) {
         if (id != -1) {
@@ -33,6 +39,8 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
                     place = exp.place
                     category = exp.category
                     date = exp.date
+                    isRecurring = exp.isRecurring
+                    recurringPeriod = exp.recurringPeriod
                 }
             }
         }
@@ -54,6 +62,17 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
         date = newDate
     }
 
+    fun updateRecurring(recurring: Boolean) {
+        isRecurring = recurring
+        if (!recurring) {
+            recurringPeriod = null
+        }
+    }
+
+    fun updateRecurringPeriod(period: RecurringPeriod) {
+        recurringPeriod = period
+    }
+
     fun saveExpense(onComplete: () -> Unit) {
         viewModelScope.launch {
             val amountDouble = amount.toDoubleOrNull() ?: return@launch
@@ -61,12 +80,18 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
                 amount = amountDouble,
                 place = place,
                 category = category,
-                date = date
+                date = date,
+                isRecurring = isRecurring,
+                recurringPeriod = recurringPeriod,
+                nextDueDate = if (isRecurring) calculateNextDueDate(date, recurringPeriod!!) else null
             ) ?: Expense(
                 amount = amountDouble,
                 place = place,
                 category = category,
-                date = date
+                date = date,
+                isRecurring = isRecurring,
+                recurringPeriod = recurringPeriod,
+                nextDueDate = if (isRecurring) calculateNextDueDate(date, recurringPeriod!!) else null
             )
 
             if (expense == null) {
@@ -76,6 +101,20 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
             }
             onComplete()
         }
+    }
+
+    private fun calculateNextDueDate(currentDate: Date, period: RecurringPeriod): Date {
+        val calendar = Calendar.getInstance()
+        calendar.time = currentDate
+
+        when (period) {
+            RecurringPeriod.DAILY -> calendar.add(Calendar.DAY_OF_MONTH, 1)
+            RecurringPeriod.WEEKLY -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
+            RecurringPeriod.MONTHLY -> calendar.add(Calendar.MONTH, 1)
+            RecurringPeriod.YEARLY -> calendar.add(Calendar.YEAR, 1)
+        }
+
+        return calendar.time
     }
 
     fun deleteExpense(onComplete: () -> Unit) {

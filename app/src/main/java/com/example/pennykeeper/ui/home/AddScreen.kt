@@ -3,7 +3,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -17,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.RecurringPeriod
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Locale
@@ -32,6 +35,10 @@ fun AddScreen(
     var selectedDate by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(ExpenseCategory.OTHER) }
     var expanded by remember { mutableStateOf(false) }
+    var isRecurring by remember { mutableStateOf(false) }
+    var selectedRecurringPeriod by remember { mutableStateOf<RecurringPeriod?>(null) }
+    var categoryExpanded by remember { mutableStateOf(false) }
+    var recurringPeriodExpanded by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -49,7 +56,7 @@ fun AddScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add New Expense") },
+                title = { Text("Add New Transaction") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -62,7 +69,8 @@ fun AddScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Place
@@ -131,6 +139,61 @@ fun AddScreen(
                                 expanded = false
                             }
                         )
+                    }
+                }
+            }
+
+            // Recurring Switch
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Recurring Expense")
+                Switch(
+                    checked = isRecurring,
+                    onCheckedChange = {
+                        isRecurring = it
+                        if (!it) selectedRecurringPeriod = null
+                    }
+                )
+            }
+
+            // Recurring Period Dropdown (visible only if isRecurring is true)
+            if (isRecurring) {
+                ExposedDropdownMenuBox(
+                    expanded = recurringPeriodExpanded,
+                    onExpandedChange = { recurringPeriodExpanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = selectedRecurringPeriod?.name ?: "Select Period",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Recurring Period") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                expanded = recurringPeriodExpanded
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = recurringPeriodExpanded,
+                        onDismissRequest = { recurringPeriodExpanded = false }
+                    ) {
+                        RecurringPeriod.values().forEach { period ->
+                            DropdownMenuItem(
+                                text = { Text(period.name) },
+                                onClick = {
+                                    selectedRecurringPeriod = period
+                                    recurringPeriodExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }

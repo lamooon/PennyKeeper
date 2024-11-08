@@ -1,14 +1,18 @@
 package com.example.pennykeeper.ui.expense
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.RecurringPeriod
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +51,8 @@ fun EditExpenseScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
@@ -85,6 +90,52 @@ fun EditExpenseScreen(
                             text = { Text(category.name) },
                             onClick = { viewModel.updateCategory(category) }
                         )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Recurring Expense")
+                    Switch(
+                        checked = viewModel.isRecurring,
+                        onCheckedChange = { viewModel.updateRecurring(it) }
+                    )
+                }
+
+                //only if recurring
+                if (viewModel.isRecurring) {
+                    var expanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it },
+                    ) {
+                        OutlinedTextField(
+                            value = viewModel.recurringPeriod?.name ?: "Select Period",
+                            onValueChange = { },
+                            readOnly = true,
+                            label = { Text("Recurring Period") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            RecurringPeriod.values().forEach { period ->
+                                DropdownMenuItem(
+                                    text = { Text(period.name) },
+                                    onClick = {
+                                        viewModel.updateRecurringPeriod(period)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }

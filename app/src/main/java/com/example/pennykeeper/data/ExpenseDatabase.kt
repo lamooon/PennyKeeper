@@ -11,7 +11,7 @@ import com.example.pennykeeper.data.model.Expense
 
 @Database(
     entities = [Expense::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
