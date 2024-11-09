@@ -3,6 +3,7 @@ package com.example.pennykeeper
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.pennykeeper.data.repository.ExpenseRepository
+import com.example.pennykeeper.ui.expense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.HomeViewModel
 import com.example.pennykeeper.ui.settings.SettingsViewModel
 import com.example.pennykeeper.ui.stats.StatisticsViewModel
@@ -23,6 +24,11 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                 SettingsViewModel() as T
             }
+
+            modelClass.isAssignableFrom(EditExpenseViewModel::class.java) -> {
+                EditExpenseViewModel(expenseRepository) as T
+            }
+
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
