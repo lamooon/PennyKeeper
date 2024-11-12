@@ -6,17 +6,37 @@ import androidx.lifecycle.viewModelScope
 import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseCategory
 import com.example.pennykeeper.data.repository.ExpenseRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.Date
 
 class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel() {
     private val _selectedPeriod = MutableStateFlow(TimePeriod.MONTH)
     val selectedPeriod = _selectedPeriod.asStateFlow()
 
-    private val calendar = Calendar.getInstance()
+    private val _currentDate = MutableStateFlow(Calendar.getInstance())
+    val currentDate = _currentDate.asStateFlow()
+
+    private val _currentMonth = MutableStateFlow(_currentDate.value.get(Calendar.MONTH) + 1)
+    val currentMonth = _currentMonth.asStateFlow()
+
+    private val _currentWeek = MutableStateFlow(getWeekOfMonth(_currentDate.value))
+    val currentWeek = _currentWeek.asStateFlow()
+
+    private val _currentYear = MutableStateFlow(_currentDate.value.get(Calendar.YEAR))
+    val currentYear = _currentYear.asStateFlow()
+
+    private val _weeksInCurrentMonth = MutableStateFlow(getWeeksInMonth(_currentDate.value))
+    val weeksInCurrentMonth = _weeksInCurrentMonth.asStateFlow()
+
+    private val _categoryExpenses = MutableStateFlow<List<CategoryExpense>>(emptyList())
+    val categoryExpenses = _categoryExpenses.asStateFlow()
+
+    private val _totalAmount = MutableStateFlow(0.0)
+    val totalAmount = _totalAmount.asStateFlow()
 
     data class CategoryExpense(
         val category: ExpenseCategory,
@@ -26,82 +46,140 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
     )
 
     enum class TimePeriod {
-        WEEK,
         MONTH,
         YEAR
     }
 
     private val categoryColors = mapOf(
-        ExpenseCategory.GROCERIES to Color(0xFF4CAF50),      // Green
-        ExpenseCategory.SUBSCRIPTIONS to Color(0xFF2196F3),  // Blue
-        ExpenseCategory.TAXES to Color(0xFFF44336),          // Red
-        ExpenseCategory.ENTERTAINMENT to Color(0xFFFF9800),  // Orange
-        ExpenseCategory.UTILITIES to Color(0xFF9C27B0),      // Purple
-        ExpenseCategory.OTHER to Color(0xFF607D8B)           // Blue Grey
+        ExpenseCategory.GROCERIES to Color(0xFF4CAF50),
+        ExpenseCategory.SUBSCRIPTIONS to Color(0xFF2196F3),
+        ExpenseCategory.TAXES to Color(0xFFF44336),
+        ExpenseCategory.ENTERTAINMENT to Color(0xFFFF9800),
+        ExpenseCategory.UTILITIES to Color(0xFF9C27B0),
+        ExpenseCategory.OTHER to Color(0xFF607D8B)
     )
-
-    private val _categoryExpenses = MutableStateFlow<List<CategoryExpense>>(emptyList())
-    val categoryExpenses = _categoryExpenses.asStateFlow()
-
-    private val _totalAmount = MutableStateFlow(0.0)
-    val totalAmount = _totalAmount.asStateFlow()
 
     init {
         viewModelScope.launch {
-            repository.expenses.collect { expenses ->
+            combine(
+                _selectedPeriod,
+                _currentDate
+            ) { period, date ->
+                Pair(period, date)
+            }.flatMapLatest { (period, date) ->
+                repository.getExpensesByPeriod(
+                    when (period) {
+                        TimePeriod.MONTH -> ExpenseRepository.TimePeriod.MONTH
+                        TimePeriod.YEAR -> ExpenseRepository.TimePeriod.YEAR
+                    },
+                    date.time
+                )
+            }.collect { expenses ->
                 updateStatistics(expenses)
             }
         }
+    }
+
+    private fun getWeekOfMonth(calendar: Calendar): Int {
+        val clone = calendar.clone() as Calendar
+        clone.setMinimalDaysInFirstWeek(1)
+        return clone.get(Calendar.WEEK_OF_MONTH)
+    }
+
+    private fun getWeeksInMonth(calendar: Calendar): Int {
+        val clone = calendar.clone() as Calendar
+        clone.setMinimalDaysInFirstWeek(1)
+
+        // Set to first day of month
+        clone.set(Calendar.DAY_OF_MONTH, 1)
+        val firstWeek = clone.get(Calendar.WEEK_OF_MONTH)
+
+        // Set to last day of month
+        clone.set(Calendar.DAY_OF_MONTH, clone.getActualMaximum(Calendar.DAY_OF_MONTH))
+        val lastWeek = clone.get(Calendar.WEEK_OF_MONTH)
+
+        return lastWeek
     }
 
     fun setPeriod(period: TimePeriod) {
         _selectedPeriod.value = period
+        updateCurrentDate(Calendar.getInstance())
+    }
+
+    fun setMonth(month: Int) {
+        val newDate = _currentDate.value.clone() as Calendar
+        newDate.set(Calendar.MONTH, month - 1) // Months are 0-based in Calendar
+        newDate.set(Calendar.DAY_OF_MONTH, 1) // Set to first day of month to avoid date overflow
+        updateCurrentDate(newDate)
+    }
+
+    private fun updateCurrentDate(calendar: Calendar) {
+        _currentDate.value = calendar
+        _currentMonth.value = calendar.get(Calendar.MONTH) + 1
+        _currentWeek.value = getWeekOfMonth(calendar)
+        _currentYear.value = calendar.get(Calendar.YEAR)
+        _weeksInCurrentMonth.value = getWeeksInMonth(calendar)
+
+        // Trigger expense update
         viewModelScope.launch {
-            repository.expenses.firstOrNull()?.let { expenses ->
+            repository.getExpensesByPeriod(
+                when (_selectedPeriod.value) {
+                    TimePeriod.MONTH -> ExpenseRepository.TimePeriod.MONTH
+                    TimePeriod.YEAR -> ExpenseRepository.TimePeriod.YEAR
+                },
+                calendar.time
+            ).collect { expenses ->
                 updateStatistics(expenses)
             }
         }
     }
 
-    private fun updateStatistics(expenses: List<Expense>) {
-        val filteredExpenses = filterExpensesByPeriod(expenses)
-        val total = filteredExpenses.sumOf { it.amount }
-        _totalAmount.value = total
 
-        val categoryAmounts = filteredExpenses
-            .groupBy { it.category }
-            .mapValues { (_, expenses) -> expenses.sumOf { it.amount } }
-
-        _categoryExpenses.value = categoryAmounts.map { (category, amount) ->
-            CategoryExpense(
-                category = category,
-                amount = amount,
-                color = categoryColors[category] ?: Color.Gray,
-                percentage = if (total > 0) (amount / total).toFloat() else 0f
-            )
-        }.sortedByDescending { it.amount }
+    fun setYear(year: Int) {
+        val newDate = _currentDate.value.clone() as Calendar
+        newDate.set(Calendar.YEAR, year)
+        updateCurrentDate(newDate)
     }
 
-    private fun filterExpensesByPeriod(expenses: List<Expense>): List<Expense> {
-        val currentDate = Calendar.getInstance()
-        val startDate = Calendar.getInstance()
-
+    fun moveNext() {
+        val newDate = _currentDate.value.clone() as Calendar
         when (_selectedPeriod.value) {
-            TimePeriod.WEEK -> {
-                startDate.add(Calendar.DAY_OF_YEAR, -7)
-            }
-            TimePeriod.MONTH -> {
-                startDate.set(Calendar.DAY_OF_MONTH, 1)
-            }
-            TimePeriod.YEAR -> {
-                startDate.set(Calendar.DAY_OF_YEAR, 1)
-            }
+            TimePeriod.MONTH -> newDate.add(Calendar.MONTH, 1)
+            TimePeriod.YEAR -> newDate.add(Calendar.YEAR, 1)
+        }
+        updateCurrentDate(newDate)
+    }
+
+    fun movePrevious() {
+        val newDate = _currentDate.value.clone() as Calendar
+        when (_selectedPeriod.value) {
+            TimePeriod.MONTH -> newDate.add(Calendar.MONTH, -1)
+            TimePeriod.YEAR -> newDate.add(Calendar.YEAR, -1)
+        }
+        updateCurrentDate(newDate)
+    }
+
+    private fun updateStatistics(expenses: List<Expense>) {
+        val total = expenses.sumOf { it.amount }
+        _totalAmount.value = total
+
+        val categoryAmounts = ExpenseCategory.values().associateWith { category ->
+            expenses
+                .filter { it.category == category }
+                .sumOf { it.amount }
         }
 
-        return expenses.filter { expense ->
-            val expenseDate = Calendar.getInstance().apply { time = expense.date }
-            expenseDate.after(startDate) && expenseDate.before(currentDate)
-        }
+        _categoryExpenses.value = categoryAmounts
+            .filter { it.value > 0 }
+            .map { (category, amount) ->
+                CategoryExpense(
+                    category = category,
+                    amount = amount,
+                    color = categoryColors[category] ?: Color.Gray,
+                    percentage = if (total > 0) (amount / total).toFloat() else 0f
+                )
+            }
+            .sortedByDescending { it.amount }
     }
 
     fun getCategoryName(category: ExpenseCategory): String {
