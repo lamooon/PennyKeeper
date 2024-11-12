@@ -86,84 +86,59 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(modifier = Modifier.padding(bottom = 16.dp)) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.clickable { isMonthDropdownExpanded = true }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = when (selectedPeriod) {
-                                        StatisticsViewModel.TimePeriod.MONTH -> Month.of(currentMonth).name
-                                        StatisticsViewModel.TimePeriod.YEAR -> currentYear.toString()
-                                    },
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    contentDescription = "Select period",
-                                    modifier = Modifier.padding(start = 4.dp)
-                                )
-                            }
-                        }
-
-                        DropdownMenu(
-                            expanded = isMonthDropdownExpanded,
-                            onDismissRequest = { isMonthDropdownExpanded = false }
-                        ) {
-                            when (selectedPeriod) {
-                                StatisticsViewModel.TimePeriod.MONTH -> {
-                                    Month.values().forEach { month ->
-                                        DropdownMenuItem(
-                                            onClick = {
-                                                viewModel.setMonth(month.ordinal + 1)  // Month ordinal starts at 0, so add 1
-                                                isMonthDropdownExpanded = false
-                                            },
-                                            text = {
-                                                Text(
-                                                    text = month.name,
-                                                    color = if (month.ordinal + 1 == currentMonth)
-                                                        MaterialTheme.colorScheme.primary
-                                                    else
-                                                        MaterialTheme.colorScheme.onSurface
-                                                )
-                                            },
-                                            modifier = Modifier.height(48.dp)
-                                        )
-                                    }
+                    DropdownMenu(
+                        expanded = isMonthDropdownExpanded,
+                        onDismissRequest = { isMonthDropdownExpanded = false }
+                    ) {
+                        when (selectedPeriod) {
+                            StatisticsViewModel.TimePeriod.MONTH -> {
+                                Month.values().forEach { month ->
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            viewModel.setMonth(month.ordinal + 1)  // Month ordinal starts at 0, so add 1
+                                            isMonthDropdownExpanded = false
+                                        },
+                                        text = {
+                                            Text(
+                                                text = month.name,
+                                                color = if (month.ordinal + 1 == currentMonth)
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.onSurface
+                                            )
+                                        },
+                                        modifier = Modifier.height(48.dp)
+                                    )
                                 }
-                                StatisticsViewModel.TimePeriod.YEAR -> {
-                                    val currentSystemYear = java.time.Year.now().value
-                                    (currentSystemYear downTo currentSystemYear - 2).forEach { year ->
-                                        DropdownMenuItem(
-                                            onClick = {
-                                                viewModel.setYear(year)
-                                                isMonthDropdownExpanded = false
-                                            },
-                                            text = {
-                                                Text(
-                                                    text = year.toString(),
-                                                    color = if (year == currentYear)
-                                                        MaterialTheme.colorScheme.primary
-                                                    else
-                                                        MaterialTheme.colorScheme.onSurface
-                                                )
-                                            },
-                                            modifier = Modifier.height(48.dp)
-                                        )
-                                    }
+                            }
+                            StatisticsViewModel.TimePeriod.YEAR -> {
+                                val currentSystemYear = java.time.Year.now().value
+                                (currentSystemYear downTo currentSystemYear - 2).forEach { year ->
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            viewModel.setYear(year)
+                                            isMonthDropdownExpanded = false
+                                        },
+                                        text = {
+                                            Text(
+                                                text = year.toString(),
+                                                color = if (year == currentYear)
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.onSurface
+                                            )
+                                        },
+                                        modifier = Modifier.height(48.dp)
+                                    )
                                 }
                             }
                         }
                     }
 
+
                     Box(
                         modifier = Modifier
-                            .size(260.dp)
+                            .size(260.dp)  // Increased from 240.dp
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -172,11 +147,35 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = "Total Spent",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "Spent in ",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                                Row(
+                                    modifier = Modifier.clickable { isMonthDropdownExpanded = true },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = when (selectedPeriod) {
+                                            StatisticsViewModel.TimePeriod.MONTH -> Month.of(currentMonth).name
+                                            StatisticsViewModel.TimePeriod.YEAR -> currentYear.toString()
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = "Select period",
+                                        modifier = Modifier.padding(start = 4.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
                             Text(
                                 text = "$${String.format("%,d", totalAmount.toLong())}",
                                 style = MaterialTheme.typography.headlineMedium,
@@ -336,7 +335,7 @@ private fun DonutChart(categoryExpenses: List<StatisticsViewModel.CategoryExpens
     Canvas(
         modifier = Modifier.fillMaxSize()
     ) {
-        val donutThickness = size.width * 0.15f
+        val donutThickness = size.width * 0.12f  // Changed from 0.15f to 0.12f for thinner ring
         var startAngle = 0f
 
         categoryExpenses.forEach { categoryExpense ->
