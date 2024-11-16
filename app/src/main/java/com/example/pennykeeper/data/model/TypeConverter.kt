@@ -23,4 +23,14 @@ class Converters {
     fun toExpenseCategory(value: String): ExpenseCategory {
         return ExpenseCategory.valueOf(value)
     }
+
+    @TypeConverter
+    fun fromRecurringPeriod(value: RecurringPeriod?): String? {
+        return value?.name
+    }
+
+    @TypeConverter
+    fun toRecurringPeriod(value: String?): RecurringPeriod? {
+        return value?.let { RecurringPeriod.valueOf(it) }
+    }
 }

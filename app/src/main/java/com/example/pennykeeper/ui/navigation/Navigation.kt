@@ -1,87 +1,131 @@
 package com.example.pennykeeper.ui.navigation
 
-
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.room.Room
-import com.example.pennykeeper.data.database.AppDatabase
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.pennykeeper.AppViewModelFactory
+import com.example.pennykeeper.data.repository.ExpenseRepository
+import com.example.pennykeeper.data.repository.SettingsRepository
+import com.example.pennykeeper.ui.expense.EditExpenseScreen
+import com.example.pennykeeper.ui.expense.EditExpenseViewModel
+import com.example.pennykeeper.ui.home.AddScreen
 import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
+import com.example.pennykeeper.ui.settings.SettingsScreen
+import com.example.pennykeeper.ui.settings.SettingsViewModel
 import com.example.pennykeeper.ui.stats.StatisticsScreen
 import com.example.pennykeeper.ui.stats.StatisticsViewModel
-import com.example.pennykeeper.ui.settings.SettingsScreen
-import com.example.pennykeeper.data.repository.ExpenseRepository
-import com.example.pennykeeper.ui.settings.SettingsViewModel
-import com.example.pennykeeper.data.repository.SettingsRepository
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
-fun Navigation(expenseRepository: ExpenseRepository) {
+fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: SettingsRepository) {
     val navController = rememberNavController()
-    val context = LocalContext.current
-
-    // Initialize the database and repository
-    val appDatabase = remember {
-        Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java,
-            "penny_keeper_database"
-        ).build()
-    }
-
-    val settingsDao = appDatabase.settingsDao()
-    val settingsRepository = SettingsRepository(settingsDao)
-
+    val factory = AppViewModelFactory(expenseRepository,settingsRepository)
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
-        NavHost(navController, startDestination = "home", Modifier.padding(innerPadding)) {
-            composable("home") {
-                val homeViewModel: HomeViewModel = viewModel { HomeViewModel(expenseRepository) }
-                HomeScreen(homeViewModel)
+        NavHost(
+            navController = navController,
+            startDestination = NavigationDestination.Home.route,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(NavigationDestination.Home.route) {
+                val homeViewModel = viewModel<HomeViewModel>(factory = factory)
+                HomeScreen(
+                    homeViewModel = homeViewModel,
+                    onNavigateToEdit = { expenseId ->
+                        navController.navigate(NavigationDestination.EditExpense.createRoute(expenseId))
+                    },
+                    onNavigateToAdd = {
+                        navController.navigate(NavigationDestination.AddExpense.route)
+                    }
+                )
             }
-            composable("statistics") {
-                val statisticsViewModel: StatisticsViewModel = viewModel { StatisticsViewModel(expenseRepository,settingsRepository) }
+
+            composable(NavigationDestination.AddExpense.route) {
+                val homeViewModel = viewModel<HomeViewModel>(factory = factory)
+                AddScreen(
+                    viewModel = homeViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = NavigationDestination.EditExpense.route,
+                arguments = listOf(
+                    navArgument(NavigationDestination.EditExpense.expenseIdArg) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val expenseId = backStackEntry.arguments?.getInt(NavigationDestination.EditExpense.expenseIdArg) ?: return@composable
+                val editViewModel = viewModel<EditExpenseViewModel>(factory = factory)
+                EditExpenseScreen(
+                    viewModel = editViewModel,
+                    expenseId = expenseId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(NavigationDestination.Statistics.route) {
+                val statisticsViewModel = viewModel<StatisticsViewModel>(factory = factory)
                 StatisticsScreen(statisticsViewModel)
             }
-            composable("settings") {
-                SettingsScreen()
-        }
+
+            composable(NavigationDestination.Settings.route) {
+                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
+                SettingsScreen(settingsViewModel)
+            }
         }
     }
 }
 
-// BottomNavigationBar implementation remains the same
-
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+private fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        BottomNavItem("home", "Home", Icons.Default.Home),
-        BottomNavItem("statistics", "Statistics", Icons.AutoMirrored.Filled.List),
-        BottomNavItem("settings", "Settings", Icons.Default.Settings)
+        BottomNavItem(
+            route = NavigationDestination.Home.route,
+            title = "Home",
+            icon = Icons.Default.Home
+        ),
+        BottomNavItem(
+            route = NavigationDestination.Statistics.route,
+            title = "Statistics",
+            icon = Icons.AutoMirrored.Filled.List
+        ),
+        BottomNavItem(
+            route = NavigationDestination.Settings.route,
+            title = "Settings",
+            icon = Icons.Default.Settings
+        )
     )
+
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
+
         items.forEach { screen ->
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = null) },
@@ -101,4 +145,8 @@ fun BottomNavigationBar(navController: NavController) {
     }
 }
 
-data class BottomNavItem(val route: String, val title: String, val icon: ImageVector)
+private data class BottomNavItem(
+    val route: String,
+    val title: String,
+    val icon: ImageVector
+)

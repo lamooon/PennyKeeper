@@ -1,23 +1,18 @@
-// SettingsRepository.kt
-
 package com.example.pennykeeper.data.repository
 
 import com.example.pennykeeper.data.dao.SettingsDao
-import com.example.pennykeeper.data.model.Settings
+import com.example.pennykeeper.data.model.Budget
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 class SettingsRepository(private val settingsDao: SettingsDao) {
 
-    // Expose the budget as a Flow
-    val budgetFlow: Flow<Double> = settingsDao.getSettings()
-        .map { settings ->
-            settings?.budget ?: 0.0
-        }
+    // Get current budget from the database
+    fun getCurrentBudget(): Flow<Budget> {
+        return settingsDao.getCurrentBudget()
+    }
 
-    // Suspend function to save the budget
+    // Save new budget to the database
     suspend fun saveBudget(budget: Double) {
-        val settings = Settings(budget = budget)
-        settingsDao.insertSettings(settings)
+        settingsDao.insert(Budget(dailyBudget = budget))
     }
 }

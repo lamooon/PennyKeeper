@@ -1,4 +1,4 @@
-package com.example.pennykeeper.data
+package com.example.pennykeeper.data.database
 
 import android.content.Context
 import androidx.room.Database
@@ -9,24 +9,30 @@ import com.example.pennykeeper.data.dao.ExpenseDao
 import com.example.pennykeeper.data.model.Converters
 import com.example.pennykeeper.data.model.Expense
 
-@Database(entities = [Expense::class], version = 1)
+@Database(
+    entities = [Expense::class],
+    version = 2,
+    exportSchema = false
+)
 @TypeConverters(Converters::class)
 abstract class ExpenseDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
 
     companion object {
         @Volatile
-        private var Instance: ExpenseDatabase? = null
+        private var INSTANCE: ExpenseDatabase? = null
 
         fun getDatabase(context: Context): ExpenseDatabase {
-            return Instance ?: synchronized(this) {
-                Room.databaseBuilder(
-                    context,
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
                     ExpenseDatabase::class.java,
                     "expense_database"
                 )
+                    .fallbackToDestructiveMigration()
                     .build()
-                    .also { Instance = it }
+                INSTANCE = instance
+                instance
             }
         }
     }

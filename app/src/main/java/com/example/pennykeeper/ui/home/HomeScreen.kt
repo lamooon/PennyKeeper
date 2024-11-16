@@ -1,135 +1,181 @@
 package com.example.pennykeeper.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.Expense
-import com.example.pennykeeper.data.model.ExpenseCategory
-
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.Locale
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel) {
+fun HomeScreen(
+    homeViewModel: HomeViewModel,
+    onNavigateToEdit: (Int) -> Unit,
+    onNavigateToAdd: () -> Unit,
+) {
     val expenses by homeViewModel.expenses.collectAsState()
-    var showAddExpenseDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text(
-            text = "Expenses",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        Button(onClick = { showAddExpenseDialog = true }) {
-            Text("Add Expense")
-        }
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(expenses) { expense ->
-                ExpenseItem(expense)
-            }
-        }
-    }
-
-    if (showAddExpenseDialog) {
-        AddExpenseDialog(
-            onDismiss = { showAddExpenseDialog = false },
-            onAddExpense = { amount, place, category ->
-                homeViewModel.addExpense(amount, place, category)
-                showAddExpenseDialog = false
-            }
-        )
-    }
-}
-
-@Composable
-fun AddExpenseDialog(onDismiss: () -> Unit, onAddExpense: (Double, String, ExpenseCategory) -> Unit) {
-    var amount by remember { mutableStateOf("") }
-    var place by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(ExpenseCategory.OTHER) }
-    var showCategoryDropdown by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Expense") },
-        text = {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp)
+        ) {
+            // Top 1/3: Habit Tracker
+            Box(
                 modifier = Modifier
+                    .weight(0.33f)
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                TextField(
-                    value = place,
-                    onValueChange = { place = it },
-                    label = { Text("Place") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Box {
-                    OutlinedButton(
-                        onClick = { showCategoryDropdown = true },
-                        modifier = Modifier.fillMaxWidth()
+                HabitTrackerSection()
+            }
+
+            // Bottom 2/3: Financial Manager (Expense List)
+            Box(
+                modifier = Modifier
+                    .weight(0.67f)
+                    .fillMaxWidth()
+            ) {
+                if (expenses.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(category.name)
+                        Text(
+                            text = "Press + button to add expenses.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    DropdownMenu(
-                        expanded = showCategoryDropdown,
-                        onDismissRequest = { showCategoryDropdown = false }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ExpenseCategory.values().forEach { expenseCategory ->
-                            DropdownMenuItem(
-                                text = { Text(expenseCategory.name) },
-                                onClick = {
-                                    category = expenseCategory
-                                    showCategoryDropdown = false
-                                }
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        items(expenses) { expense ->
+                            ExpenseCard(
+                                expense = expense,
+                                onClick = { onNavigateToEdit(expense.id) }
                             )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amountDouble = amount.toDoubleOrNull() ?: 0.0
-                    if (amountDouble > 0 && place.isNotBlank()) {
-                        onAddExpense(amountDouble, place, category)
-                    }
-                }
-            ) {
-                Text("Add")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
         }
-    )
+
+        FloatingActionButton(
+            onClick = onNavigateToAdd,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add Expense")
+        }
+    }
 }
 
 @Composable
-fun ExpenseItem(expense: Expense) {
+private fun HabitTrackerSection() {
+    // Placeholder for Habit Tracker
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Habit Tracker implementation will go here
+    }
+}
+
+@Composable
+private fun ExpenseCard(
+    expense: Expense,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = expense.place, style = MaterialTheme.typography.titleMedium)
-            Text(text = "Amount: $${expense.amount}", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Category: ${expense.category}", style = MaterialTheme.typography.bodyMedium)
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = expense.place,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "$${String.format("%.2f", expense.amount)}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = expense.category.name,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (expense.isRecurring) {
+                        AssistChip(
+                            onClick = { },
+                            label = {
+                                Text(
+                                    text = expense.recurringPeriod?.name ?: "",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Recurring",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
+                }
+                Text(
+                    text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                        .format(expense.date),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

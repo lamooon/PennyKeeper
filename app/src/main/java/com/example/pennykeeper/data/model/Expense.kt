@@ -11,9 +11,18 @@ data class Expense(
     val amount: Double,
     val place: String,
     val category: ExpenseCategory,
-    val date: Date
+    val date: Date,
+    val isRecurring: Boolean = false,
+    val recurringPeriod: RecurringPeriod? = null,
+    val nextDueDate: Date? = null
 )
 
+enum class RecurringPeriod {
+    DAILY,
+    WEEKLY,
+    MONTHLY,
+    YEARLY
+}
 
 enum class ExpenseCategory {
     GROCERIES,
