@@ -7,6 +7,7 @@ import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import java.util.Date
@@ -246,6 +247,28 @@ class ExpenseRepository(
         }
 
         return calendar.time
+    }
+
+    //for prediction service
+    suspend fun getAllExpenses(): List<ExpenseUiModel> {
+        return combine(
+            expenseDao.getAllExpenses(),
+            categoryDao.getAllCategories()
+        ) { expenses, categories ->
+            expenses.map { expense ->
+                val category = categories.find { it.id == expense.categoryId }
+                ExpenseUiModel(
+                    id = expense.id,
+                    amount = expense.amount,
+                    place = expense.place,
+                    categoryName = category?.name ?: "Unknown",
+                    date = expense.date,
+                    isRecurring = expense.isRecurring,
+                    recurringPeriod = expense.recurringPeriod,
+                    nextDueDate = expense.nextDueDate
+                )
+            }
+        }.first()
     }
 
     enum class TimePeriod {

@@ -35,6 +35,7 @@ import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
 import com.example.pennykeeper.ui.settings.CategoryViewModel
 import com.example.pennykeeper.ui.settings.ManageCategoriesScreen
+import com.example.pennykeeper.ui.settings.PredictionScreen
 import com.example.pennykeeper.ui.settings.SetBudgetScreen
 import com.example.pennykeeper.ui.settings.SettingsScreen
 import com.example.pennykeeper.ui.settings.SettingsViewModel
@@ -103,7 +104,8 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
                 SettingsScreen(
                     settingsViewModel = settingsViewModel,
                     onNavigateToBudget = { navController.navigate(NavigationDestination.SetBudget.route) },
-                    onNavigateToCategories = { navController.navigate(NavigationDestination.ManageCategories.route) }
+                    onNavigateToCategories = { navController.navigate(NavigationDestination.ManageCategories.route) },
+                    onNavigateToPrediction = { navController.navigate(NavigationDestination.ExpensePrediction.route) }
                 )
             }
 
@@ -119,6 +121,14 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
                 val categoryViewModel = viewModel<CategoryViewModel>(factory = factory)
                 ManageCategoriesScreen(
                     viewModel = categoryViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(NavigationDestination.ExpensePrediction.route) {
+                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
+                PredictionScreen(
+                    settingsViewModel = settingsViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

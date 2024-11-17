@@ -14,13 +14,13 @@ fun formatCurrency(amount: Double): String {
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
     return currencyFormatter.format(amount)
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     settingsViewModel: SettingsViewModel,
     onNavigateToBudget: () -> Unit,
-    onNavigateToCategories: () -> Unit
+    onNavigateToCategories: () -> Unit,
+    onNavigateToPrediction: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -51,6 +51,15 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Manage Categories")
+                }
+            }
+
+            item {
+                FilledTonalButton(
+                    onClick = onNavigateToPrediction,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Expense Prediction")
                 }
             }
         }
