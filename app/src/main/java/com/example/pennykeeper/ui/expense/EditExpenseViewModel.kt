@@ -151,4 +151,11 @@ class EditExpenseViewModel(
             }
         }
     }
+
+    fun isValid(): Boolean {
+        return amount.isNotEmpty() &&
+                place.isNotEmpty() &&
+                categoryName.isNotEmpty() &&
+                (!isRecurring || recurringPeriod != null)
+    }
 }

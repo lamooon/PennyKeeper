@@ -1,22 +1,31 @@
 package com.example.pennykeeper.ui.expense
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.pennykeeper.data.model.CategoryEntity
 import com.example.pennykeeper.data.model.RecurringPeriod
-import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditExpenseScreen(
     viewModel: EditExpenseViewModel,
@@ -28,134 +37,184 @@ fun EditExpenseScreen(
     }
 
     var categoryExpanded by remember { mutableStateOf(false) }
+    var periodExpanded by remember { mutableStateOf(false) }
     val categories by viewModel.categories.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (expenseId == -1) "Add Expense" else "Edit Expense") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    if (expenseId != -1) {
-                        IconButton(onClick = {
-                            viewModel.deleteExpense(onNavigateBack)
-                        }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val amountFocusRequester = remember { FocusRequester() }
+    val placeFocusRequester = remember { FocusRequester() }
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                categoryExpanded = false
+                periodExpanded = false
+                focusManager.clearFocus()
+            }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (expenseId == -1) "Add Expense" else "Edit Expense") },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        if (expenseId != -1) {
+                            IconButton(onClick = {
+                                viewModel.deleteExpense(onNavigateBack)
+                            }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                            }
                         }
                     }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            OutlinedTextField(
-                value = viewModel.amount,
-                onValueChange = { viewModel.updateAmount(it) },
-                label = { Text("Amount") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = viewModel.place,
-                onValueChange = { viewModel.updatePlace(it) },
-                label = { Text("Place") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ExposedDropdownMenuBox(
-                expanded = categoryExpanded,
-                onExpandedChange = { categoryExpanded = it },
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(padding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedTextField(
-                    value = viewModel.categoryName,
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Category") },
+                    value = viewModel.amount,
+                    onValueChange = {
+                        if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            viewModel.updateAmount(it)
+                        }
+                    },
+                    label = { Text("Amount") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor()
+                        .focusRequester(amountFocusRequester),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    ),
+                    singleLine = true
                 )
 
-                ExposedDropdownMenu(
-                    expanded = categoryExpanded,
-                    onDismissRequest = { categoryExpanded = false }
-                ) {
-                    categories.forEach { category ->
-                        DropdownMenuItem(
-                            text = { Text(category.name) },
-                            onClick = {
-                                viewModel.updateCategory(category)
-                                categoryExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Recurring Expense")
-                Switch(
-                    checked = viewModel.isRecurring,
-                    onCheckedChange = { viewModel.updateRecurring(it) }
+                OutlinedTextField(
+                    value = viewModel.place,
+                    onValueChange = { viewModel.updatePlace(it) },
+                    label = { Text("Place") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(placeFocusRequester),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    singleLine = true
                 )
-            }
 
-            if (viewModel.isRecurring) {
-                var periodExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
-                    expanded = periodExpanded,
-                    onExpandedChange = { periodExpanded = it },
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it },
                 ) {
                     OutlinedTextField(
-                        value = viewModel.recurringPeriod?.name ?: "Select Period",
+                        value = viewModel.categoryName,
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("Recurring Period") },
+                        label = { Text("Category") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor()
                     )
 
                     ExposedDropdownMenu(
-                        expanded = periodExpanded,
-                        onDismissRequest = { periodExpanded = false }
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
                     ) {
-                        RecurringPeriod.values().forEach { period ->
+                        categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(period.name) },
+                                text = { Text(category.name) },
                                 onClick = {
-                                    viewModel.updateRecurringPeriod(period)
-                                    periodExpanded = false
+                                    viewModel.updateCategory(category)
+                                    categoryExpanded = false
                                 }
                             )
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Recurring Expense")
+                    Switch(
+                        checked = viewModel.isRecurring,
+                        onCheckedChange = { viewModel.updateRecurring(it) }
+                    )
+                }
 
-            Button(
-                onClick = { viewModel.saveExpense(onNavigateBack) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = viewModel.amount.isNotEmpty() //needs fixing here if crashes
-            ) {
-                Text(if (expenseId == -1) "Add" else "Save")
+                if (viewModel.isRecurring) {
+                    ExposedDropdownMenuBox(
+                        expanded = periodExpanded,
+                        onExpandedChange = { periodExpanded = it },
+                    ) {
+                        OutlinedTextField(
+                            value = viewModel.recurringPeriod?.name ?: "Select Period",
+                            onValueChange = { },
+                            readOnly = true,
+                            label = { Text("Recurring Period") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = periodExpanded,
+                            onDismissRequest = { periodExpanded = false }
+                        ) {
+                            RecurringPeriod.values().forEach { period ->
+                                DropdownMenuItem(
+                                    text = { Text(period.name) },
+                                    onClick = {
+                                        viewModel.updateRecurringPeriod(period)
+                                        periodExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        keyboardController?.hide()
+                        viewModel.saveExpense(onNavigateBack)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = viewModel.isValid()
+                ) {
+                    Text(if (expenseId == -1) "Add" else "Save")
+                }
             }
         }
     }
