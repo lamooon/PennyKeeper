@@ -88,7 +88,6 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
         return clone.get(Calendar.WEEK_OF_MONTH)
     }
 
-    //probably don't need this but it crashes the program if not added so I'll keep it :(
     private fun getWeeksInMonth(calendar: Calendar): Int {
         val clone = calendar.clone() as Calendar
         clone.setMinimalDaysInFirstWeek(1)

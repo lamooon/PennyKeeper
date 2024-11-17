@@ -53,7 +53,6 @@ class ExpenseRepository(
         }
     }
 
-    // In ExpenseRepository.kt
     fun getExpensesByPeriod(period: TimePeriod, date: Date = Date()): Flow<List<ExpenseUiModel>> {
         return expenses.map { expenseList ->
             val calendar = Calendar.getInstance()
@@ -61,6 +60,7 @@ class ExpenseRepository(
 
             when (period) {
                 TimePeriod.WEEK -> {
+                    // Week logic remains the same
                     val startCalendar = calendar.clone() as Calendar
                     startCalendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
                     val endCalendar = startCalendar.clone() as Calendar
@@ -75,16 +75,28 @@ class ExpenseRepository(
                     val currentMonth = calendar.get(Calendar.MONTH)
                     val currentYear = calendar.get(Calendar.YEAR)
 
-                    expenseList.filter { expense ->
+                    expenseList.mapNotNull { expense ->
                         val expenseDate = Calendar.getInstance().apply { time = expense.date }
                         val expenseMonth = expenseDate.get(Calendar.MONTH)
                         val expenseYear = expenseDate.get(Calendar.YEAR)
 
-                        if (!expense.isRecurring) {
-                            expenseMonth == currentMonth && expenseYear == currentYear
-                        } else if (expense.recurringPeriod == RecurringPeriod.MONTHLY) {
-                            expenseYear < currentYear || (expenseYear == currentYear && expenseMonth <= currentMonth)
-                        } else false
+                        when {
+                            // Regular non-recurring expenses
+                            !expense.isRecurring && expenseMonth == currentMonth && expenseYear == currentYear -> {
+                                expense
+                            }
+                            // Monthly recurring expenses
+                            expense.isRecurring && expense.recurringPeriod == RecurringPeriod.MONTHLY &&
+                                    (expenseYear < currentYear || (expenseYear == currentYear && expenseMonth <= currentMonth)) -> {
+                                expense
+                            }
+                            // Yearly recurring expenses - divide into 12
+                            expense.isRecurring && expense.recurringPeriod == RecurringPeriod.YEARLY &&
+                                    isExpenseActiveInYear(expenseDate, calendar) -> {
+                                expense.copy(amount = expense.amount / 12)
+                            }
+                            else -> null
+                        }
                     }
                 }
                 TimePeriod.YEAR -> {
@@ -94,15 +106,28 @@ class ExpenseRepository(
                         val expenseDate = Calendar.getInstance().apply { time = expense.date }
                         val expenseYear = expenseDate.get(Calendar.YEAR)
 
-                        if (!expense.isRecurring) {
-                            expenseYear == currentYear
-                        } else {
-                            expenseYear <= currentYear
+                        when {
+                            !expense.isRecurring -> expenseYear == currentYear
+                            expense.recurringPeriod == RecurringPeriod.MONTHLY -> {
+                                expenseYear <= currentYear
+                            }
+                            expense.recurringPeriod == RecurringPeriod.YEARLY -> {
+                                isExpenseActiveInYear(expenseDate, calendar)
+                            }
+                            else -> false
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun isExpenseActiveInYear(expenseDate: Calendar, currentDate: Calendar): Boolean {
+        val expenseYear = expenseDate.get(Calendar.YEAR)
+        val currentYear = currentDate.get(Calendar.YEAR)
+
+        // Check if the expense is active in the current year
+        return expenseYear <= currentYear
     }
 
     suspend fun addExpense(expense: ExpenseUiModel) {
