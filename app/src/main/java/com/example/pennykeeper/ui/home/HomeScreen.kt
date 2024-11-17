@@ -33,7 +33,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(bottom = 80.dp)
         ) {
-            // Top 1/3: Habit Tracker
             Box(
                 modifier = Modifier
                     .weight(0.33f)
@@ -42,7 +41,6 @@ fun HomeScreen(
                 HabitTrackerSection()
             }
 
-            // Bottom 2/3: Financial Manager (Expense List)
             Box(
                 modifier = Modifier
                     .weight(0.67f)
@@ -63,11 +61,11 @@ fun HomeScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         item {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
 
                         items(expenses) { expense ->
@@ -78,7 +76,7 @@ fun HomeScreen(
                         }
 
                         item {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
                 }
@@ -117,64 +115,58 @@ private fun ExpenseCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Left side: Place and Category
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = expense.place,
                     style = MaterialTheme.typography.titleMedium
                 )
-                Text(
-                    text = "$${String.format("%.2f", expense.amount)}",
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = expense.categoryName,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (expense.isRecurring) {
-                        AssistChip(
-                            onClick = { },
-                            label = {
-                                Text(
-                                    text = expense.recurringPeriod?.name ?: "",
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Recurring",
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Recurring",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
+            }
+
+            // Right side: Amount and Date
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
-                    text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                    text = "$${String.format("%.2f", expense.amount)}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = SimpleDateFormat("MMM d", Locale.getDefault())
                         .format(expense.date),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
