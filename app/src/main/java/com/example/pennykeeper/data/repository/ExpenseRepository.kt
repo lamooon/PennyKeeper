@@ -1,25 +1,65 @@
 package com.example.pennykeeper.data.repository
 
 import com.example.pennykeeper.data.dao.ExpenseDao
+import com.example.pennykeeper.data.dao.CategoryDao // You'll need to add this
 import com.example.pennykeeper.data.model.Expense
+import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import java.util.Date
 
-class ExpenseRepository(private val expenseDao: ExpenseDao) {
-    val expenses: Flow<List<Expense>> = expenseDao.getAllExpenses()
-    val recurringExpenses: Flow<List<Expense>> = expenseDao.getRecurringExpenses()
+class ExpenseRepository(
+    private val expenseDao: ExpenseDao,
+    private val categoryDao: CategoryDao
+) {
+    val expenses: Flow<List<ExpenseUiModel>> = combine(
+        expenseDao.getAllExpenses(),
+        categoryDao.getAllCategories()
+    ) { expenses, categories ->
+        expenses.map { expense ->
+            val category = categories.find { it.id == expense.categoryId }
+            ExpenseUiModel(
+                id = expense.id,
+                amount = expense.amount,
+                place = expense.place,
+                categoryName = category?.name ?: "Unknown",
+                date = expense.date,
+                isRecurring = expense.isRecurring,
+                recurringPeriod = expense.recurringPeriod,
+                nextDueDate = expense.nextDueDate
+            )
+        }
+    }
 
-    fun getExpensesByPeriod(period: TimePeriod, date: Date = Date()): Flow<List<Expense>> {
+    val recurringExpenses: Flow<List<ExpenseUiModel>> = combine(
+        expenseDao.getRecurringExpenses(),
+        categoryDao.getAllCategories()
+    ) { expenses, categories ->
+        expenses.map { expense ->
+            val category = categories.find { it.id == expense.categoryId }
+            ExpenseUiModel(
+                id = expense.id,
+                amount = expense.amount,
+                place = expense.place,
+                categoryName = category?.name ?: "Unknown",
+                date = expense.date,
+                isRecurring = expense.isRecurring,
+                recurringPeriod = expense.recurringPeriod,
+                nextDueDate = expense.nextDueDate
+            )
+        }
+    }
+
+    fun getExpensesByPeriod(period: TimePeriod, date: Date = Date()): Flow<List<ExpenseUiModel>> {
         return expenses.map { expenseList ->
             val calendar = Calendar.getInstance()
             calendar.time = date
 
-            val filteredExpenses = when (period) {
+            when (period) {
                 TimePeriod.WEEK -> {
-                    // Get start and end of week
                     val startCalendar = calendar.clone() as Calendar
                     startCalendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
                     val endCalendar = startCalendar.clone() as Calendar
@@ -31,7 +71,6 @@ class ExpenseRepository(private val expenseDao: ExpenseDao) {
                     }
                 }
                 TimePeriod.MONTH -> {
-                    // Get expenses for current month
                     val currentMonth = calendar.get(Calendar.MONTH)
                     val currentYear = calendar.get(Calendar.YEAR)
 
@@ -42,7 +81,6 @@ class ExpenseRepository(private val expenseDao: ExpenseDao) {
                     }
                 }
                 TimePeriod.YEAR -> {
-                    // Get expenses for current year
                     val currentYear = calendar.get(Calendar.YEAR)
 
                     expenseList.filter {
@@ -51,33 +89,113 @@ class ExpenseRepository(private val expenseDao: ExpenseDao) {
                     }
                 }
             }
-            filteredExpenses
         }
     }
 
-    suspend fun addExpense(expense: Expense) {
-        expenseDao.insertExpense(expense)
+    suspend fun addExpense(expense: ExpenseUiModel) {
+        val categoryId = categoryDao.getCategoryByName(expense.categoryName)?.id
+            ?: throw IllegalArgumentException("Category not found")
+
+        val dbExpense = Expense(
+            id = expense.id,
+            amount = expense.amount,
+            place = expense.place,
+            categoryId = categoryId,
+            date = expense.date,
+            isRecurring = expense.isRecurring,
+            recurringPeriod = expense.recurringPeriod,
+            nextDueDate = expense.nextDueDate
+        )
+        expenseDao.insertExpense(dbExpense)
     }
 
-    suspend fun updateExpense(expense: Expense) {
-        expenseDao.updateExpense(expense)
+    suspend fun updateExpense(expense: ExpenseUiModel) {
+        val categoryId = categoryDao.getCategoryByName(expense.categoryName)?.id
+            ?: throw IllegalArgumentException("Category not found")
+
+        val dbExpense = Expense(
+            id = expense.id,
+            amount = expense.amount,
+            place = expense.place,
+            categoryId = categoryId,
+            date = expense.date,
+            isRecurring = expense.isRecurring,
+            recurringPeriod = expense.recurringPeriod,
+            nextDueDate = expense.nextDueDate
+        )
+        expenseDao.updateExpense(dbExpense)
     }
 
-    suspend fun deleteExpense(expense: Expense) {
-        expenseDao.deleteExpense(expense)
+    suspend fun deleteExpense(expense: ExpenseUiModel) {
+        val categoryId = categoryDao.getCategoryByName(expense.categoryName)?.id
+            ?: throw IllegalArgumentException("Category not found")
+
+        val dbExpense = Expense(
+            id = expense.id,
+            amount = expense.amount,
+            place = expense.place,
+            categoryId = categoryId,
+            date = expense.date,
+            isRecurring = expense.isRecurring,
+            recurringPeriod = expense.recurringPeriod,
+            nextDueDate = expense.nextDueDate
+        )
+        expenseDao.deleteExpense(dbExpense)
     }
 
-    suspend fun getExpenseById(id: Int): Expense? {
-        return expenseDao.getExpenseById(id)
+    suspend fun getExpenseById(id: Int): ExpenseUiModel? {
+        val expense = expenseDao.getExpenseById(id) ?: return null
+        val category = categoryDao.getCategoryById(expense.categoryId)
+
+        return ExpenseUiModel(
+            id = expense.id,
+            amount = expense.amount,
+            place = expense.place,
+            categoryName = category?.name ?: "Unknown",
+            date = expense.date,
+            isRecurring = expense.isRecurring,
+            recurringPeriod = expense.recurringPeriod,
+            nextDueDate = expense.nextDueDate
+        )
     }
 
-    fun getDueRecurringExpenses(date: Date): Flow<List<Expense>> {
-        return expenseDao.getDueRecurringExpenses(date)
+    fun getDueRecurringExpenses(date: Date): Flow<List<ExpenseUiModel>> {
+        return combine(
+            expenseDao.getDueRecurringExpenses(date),
+            categoryDao.getAllCategories()
+        ) { expenses, categories ->
+            expenses.map { expense ->
+                val category = categories.find { it.id == expense.categoryId }
+                ExpenseUiModel(
+                    id = expense.id,
+                    amount = expense.amount,
+                    place = expense.place,
+                    categoryName = category?.name ?: "Unknown",
+                    date = expense.date,
+                    isRecurring = expense.isRecurring,
+                    recurringPeriod = expense.recurringPeriod,
+                    nextDueDate = expense.nextDueDate
+                )
+            }
+        }
     }
 
-    suspend fun updateRecurringExpenseNextDueDate(expense: Expense) {
+    suspend fun updateRecurringExpenseNextDueDate(expense: ExpenseUiModel) {
         val nextDueDate = calculateNextDueDate(expense.date, expense.recurringPeriod!!)
-        expenseDao.updateExpense(expense.copy(nextDueDate = nextDueDate))
+        val categoryId = categoryDao.getCategoryByName(expense.categoryName)?.id
+            ?: throw IllegalArgumentException("Category not found")
+
+        val dbExpense = Expense(
+            id = expense.id,
+            amount = expense.amount,
+            place = expense.place,
+            categoryId = categoryId,
+            date = expense.date,
+            isRecurring = expense.isRecurring,
+            recurringPeriod = expense.recurringPeriod,
+            nextDueDate = nextDueDate
+        )
+        expenseDao.updateExpense(dbExpense)
     }
 
     private fun calculateNextDueDate(currentDate: Date, period: RecurringPeriod): Date {

@@ -5,23 +5,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pennykeeper.data.model.CategoryEntity
 import com.example.pennykeeper.data.model.Expense
-import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
+import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 
-class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() {
-    var expense by mutableStateOf<Expense?>(null)
+// EditExpenseViewModel.kt
+class EditExpenseViewModel(
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository
+) : ViewModel() {
+    var expense by mutableStateOf<ExpenseUiModel?>(null)
         private set
+
+    private val _categories = MutableStateFlow<List<CategoryEntity>>(emptyList())
+    val categories: StateFlow<List<CategoryEntity>> = _categories
 
     var amount by mutableStateOf("")
         private set
     var place by mutableStateOf("")
         private set
-    var category by mutableStateOf(ExpenseCategory.OTHER)
+    var categoryName by mutableStateOf("")
         private set
     var date by mutableStateOf(Date())
         private set
@@ -30,18 +41,33 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
     var recurringPeriod by mutableStateOf<RecurringPeriod?>(null)
         private set
 
+    init {
+        viewModelScope.launch {
+            categoryRepository.ensureDefaultCategoriesExist()
+            categoryRepository.categories.collect {
+                _categories.value = it
+            }
+        }
+    }
+
     fun loadExpense(id: Int) {
         if (id != -1) {
             viewModelScope.launch {
-                expense = repository.getExpenseById(id)
+                expense = expenseRepository.getExpenseById(id)
                 expense?.let { exp ->
                     amount = exp.amount.toString()
                     place = exp.place
-                    category = exp.category
+                    categoryName = exp.categoryName
                     date = exp.date
                     isRecurring = exp.isRecurring
                     recurringPeriod = exp.recurringPeriod
                 }
+            }
+        } else {
+            // Set default category for new expense
+            viewModelScope.launch {
+                val defaultCategory = categoryRepository.getDefaultCategory()
+                categoryName = defaultCategory?.name ?: ""
             }
         }
     }
@@ -54,8 +80,8 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
         place = newPlace
     }
 
-    fun updateCategory(newCategory: ExpenseCategory) {
-        category = newCategory
+    fun updateCategory(category: CategoryEntity) {
+        categoryName = category.name
     }
 
     fun updateDate(newDate: Date) {
@@ -76,18 +102,20 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
     fun saveExpense(onComplete: () -> Unit) {
         viewModelScope.launch {
             val amountDouble = amount.toDoubleOrNull() ?: return@launch
+            if (categoryName.isEmpty()) return@launch
+
             val newExpense = expense?.copy(
                 amount = amountDouble,
                 place = place,
-                category = category,
+                categoryName = categoryName,
                 date = date,
                 isRecurring = isRecurring,
                 recurringPeriod = recurringPeriod,
                 nextDueDate = if (isRecurring) calculateNextDueDate(date, recurringPeriod!!) else null
-            ) ?: Expense(
+            ) ?: ExpenseUiModel(
                 amount = amountDouble,
                 place = place,
-                category = category,
+                categoryName = categoryName,
                 date = date,
                 isRecurring = isRecurring,
                 recurringPeriod = recurringPeriod,
@@ -95,9 +123,9 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
             )
 
             if (expense == null) {
-                repository.addExpense(newExpense)
+                expenseRepository.addExpense(newExpense)
             } else {
-                repository.updateExpense(newExpense)
+                expenseRepository.updateExpense(newExpense)
             }
             onComplete()
         }
@@ -120,7 +148,7 @@ class EditExpenseViewModel(private val repository: ExpenseRepository) : ViewMode
     fun deleteExpense(onComplete: () -> Unit) {
         viewModelScope.launch {
             expense?.let {
-                repository.deleteExpense(it)
+                expenseRepository.deleteExpense(it)
                 onComplete()
             }
         }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -11,7 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.CategoryEntity
 import com.example.pennykeeper.data.model.RecurringPeriod
 import java.util.*
 
@@ -27,6 +28,7 @@ fun EditExpenseScreen(
     }
 
     var categoryExpanded by remember { mutableStateOf(false) }
+    val categories by viewModel.categories.collectAsState()
 
     Scaffold(
         topBar = {
@@ -34,7 +36,7 @@ fun EditExpenseScreen(
                 title = { Text(if (expenseId == -1) "Add Expense" else "Edit Expense") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -76,7 +78,7 @@ fun EditExpenseScreen(
                 onExpandedChange = { categoryExpanded = it },
             ) {
                 OutlinedTextField(
-                    value = viewModel.category.name,
+                    value = viewModel.categoryName,
                     onValueChange = { },
                     readOnly = true,
                     label = { Text("Category") },
@@ -89,7 +91,7 @@ fun EditExpenseScreen(
                     expanded = categoryExpanded,
                     onDismissRequest = { categoryExpanded = false }
                 ) {
-                    ExpenseCategory.values().forEach { category ->
+                    categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
@@ -150,7 +152,8 @@ fun EditExpenseScreen(
 
             Button(
                 onClick = { viewModel.saveExpense(onNavigateBack) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = viewModel.amount.isNotEmpty() //needs fixing here if crashes
             ) {
                 Text(if (expenseId == -1) "Add" else "Save")
             }

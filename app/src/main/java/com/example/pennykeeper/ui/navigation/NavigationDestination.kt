@@ -4,6 +4,8 @@ sealed class NavigationDestination(val route: String) {
     object Home : NavigationDestination("home")
     object Statistics : NavigationDestination("statistics")
     object Settings : NavigationDestination("settings")
+    object SetBudget : NavigationDestination("settings/budget")
+    object ManageCategories : NavigationDestination("settings/categories")
 
     object EditExpense : NavigationDestination("edit/{expenseId}") {
         fun createRoute(expenseId: Int) = "edit/$expenseId"

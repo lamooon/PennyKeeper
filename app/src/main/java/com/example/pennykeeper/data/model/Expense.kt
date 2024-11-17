@@ -2,6 +2,7 @@ package com.example.pennykeeper.data.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.Date
 
@@ -14,7 +15,8 @@ import java.util.Date
             childColumns = ["categoryId"],
             onDelete = ForeignKey.SET_DEFAULT
         )
-    ]
+    ],
+    indices = [Index("categoryId")] // foreign key
 )
 data class Expense(
     @PrimaryKey(autoGenerate = true)

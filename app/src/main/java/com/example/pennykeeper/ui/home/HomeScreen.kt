@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.Expense
+import com.example.pennykeeper.data.model.ExpenseUiModel
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Locale
@@ -109,7 +110,7 @@ private fun HabitTrackerSection() {
 
 @Composable
 private fun ExpenseCard(
-    expense: Expense,
+    expense: ExpenseUiModel,
     onClick: () -> Unit
 ) {
     Card(
@@ -148,7 +149,7 @@ private fun ExpenseCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = expense.category.name,
+                        text = expense.categoryName,
                         style = MaterialTheme.typography.bodyMedium
                     )
                     if (expense.isRecurring) {

@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pennykeeper.data.model.Expense
-import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
     val totalAmount = _totalAmount.asStateFlow()
 
     data class CategoryExpense(
-        val category: ExpenseCategory,
+        val categoryName: String,
         val amount: Double,
         val color: Color,
         val percentage: Float
@@ -50,14 +50,16 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
         YEAR
     }
 
-    private val categoryColors = mapOf(
-        ExpenseCategory.GROCERIES to Color(0xFF4CAF50),
-        ExpenseCategory.SUBSCRIPTIONS to Color(0xFF2196F3),
-        ExpenseCategory.TAXES to Color(0xFFF44336),
-        ExpenseCategory.ENTERTAINMENT to Color(0xFFFF9800),
-        ExpenseCategory.UTILITIES to Color(0xFF9C27B0),
-        ExpenseCategory.OTHER to Color(0xFF607D8B)
+    private val availableColors = listOf(
+        Color(0xFF4CAF50), // Green
+        Color(0xFF2196F3), // Blue
+        Color(0xFFF44336), // Red
+        Color(0xFFFF9800), // Orange
+        Color(0xFF9C27B0), // Purple
+        Color(0xFF607D8B)  // Gray
     )
+
+    private var categoryColorMap = mutableMapOf<String, Color>()
 
     init {
         viewModelScope.launch {
@@ -86,6 +88,7 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
         return clone.get(Calendar.WEEK_OF_MONTH)
     }
 
+    //probably don't need this but it crashes the program if not added so I'll keep it :(
     private fun getWeeksInMonth(calendar: Calendar): Int {
         val clone = calendar.clone() as Calendar
         clone.setMinimalDaysInFirstWeek(1)
@@ -159,37 +162,34 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
         updateCurrentDate(newDate)
     }
 
-    private fun updateStatistics(expenses: List<Expense>) {
+    private fun updateStatistics(expenses: List<ExpenseUiModel>) {
         val total = expenses.sumOf { it.amount }
         _totalAmount.value = total
 
-        val categoryAmounts = ExpenseCategory.values().associateWith { category ->
-            expenses
-                .filter { it.category == category }
-                .sumOf { it.amount }
+        // Group expenses by category name
+        val categoryAmounts = expenses
+            .groupBy { it.categoryName }
+            .mapValues { it.value.sumOf { expense -> expense.amount } }
+
+        // Assign colors to categories if not already assigned
+        categoryAmounts.keys.forEach { categoryName ->
+            if (!categoryColorMap.containsKey(categoryName)) {
+                val nextColor = availableColors[categoryColorMap.size % availableColors.size]
+                categoryColorMap[categoryName] = nextColor
+            }
         }
 
         _categoryExpenses.value = categoryAmounts
             .filter { it.value > 0 }
-            .map { (category, amount) ->
+            .map { (categoryName, amount) ->
                 CategoryExpense(
-                    category = category,
+                    categoryName = categoryName,
                     amount = amount,
-                    color = categoryColors[category] ?: Color.Gray,
+                    color = categoryColorMap[categoryName] ?: Color.Gray,
                     percentage = if (total > 0) (amount / total).toFloat() else 0f
                 )
             }
             .sortedByDescending { it.amount }
     }
 
-    fun getCategoryName(category: ExpenseCategory): String {
-        return when (category) {
-            ExpenseCategory.GROCERIES -> "Groceries"
-            ExpenseCategory.SUBSCRIPTIONS -> "Subscriptions"
-            ExpenseCategory.TAXES -> "Taxes"
-            ExpenseCategory.ENTERTAINMENT -> "Entertainment"
-            ExpenseCategory.UTILITIES -> "Utilities"
-            ExpenseCategory.OTHER -> "Other"
-        }
-    }
 }

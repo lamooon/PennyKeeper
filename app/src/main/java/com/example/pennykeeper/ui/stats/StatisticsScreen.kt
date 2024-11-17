@@ -315,7 +315,7 @@ private fun CategoryCard(
             }
 
             Text(
-                text = category.category.name,
+                text = category.categoryName,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp)
             )

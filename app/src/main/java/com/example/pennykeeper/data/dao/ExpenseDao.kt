@@ -22,8 +22,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun getExpenseById(id: Int): Expense?
 
-    @Query("SELECT * FROM expenses WHERE category = :category")
-    fun getExpensesByCategory(category: String): Flow<List<Expense>>
+    // uses foreign key
+    @Query("SELECT * FROM expenses WHERE categoryId = :categoryId")
+    fun getExpensesByCategory(categoryId: Int): Flow<List<Expense>>
 
     @Query("SELECT * FROM expenses WHERE isRecurring = 1")
     fun getRecurringExpenses(): Flow<List<Expense>>

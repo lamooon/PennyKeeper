@@ -9,6 +9,15 @@ interface CategoryDao {
     @Query("SELECT * FROM categories")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
+    suspend fun getCategoryByName(name: String): CategoryEntity?
+
+    @Query("SELECT * FROM categories WHERE id = :id")
+    suspend fun getCategoryById(id: Int): CategoryEntity?
+
+    @Query("SELECT * FROM categories WHERE isDefault = 1 LIMIT 1")
+    suspend fun getDefaultCategory(): CategoryEntity?
+
     @Insert
     suspend fun insertCategory(category: CategoryEntity)
 
@@ -18,9 +27,20 @@ interface CategoryDao {
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
 
-    @Query("SELECT * FROM categories WHERE id = :id")
-    suspend fun getCategoryById(id: Int): CategoryEntity?
+    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name)")
+    suspend fun categoryExists(name: String): Boolean
+
+    @Transaction
+    suspend fun insertIfNotExists(category: CategoryEntity) {
+        val exists = categoryExists(category.name)
+        if (!exists) {
+            insertCategory(category)
+        }
+    }
 
     @Query("SELECT * FROM categories WHERE isDefault = 1")
-    suspend fun getDefaultCategory(): CategoryEntity?
+    fun getDefaultCategories(): Flow<List<CategoryEntity>>
+
+    @Query("DELETE FROM categories WHERE isDefault = 0")
+    suspend fun deleteNonDefaultCategories()
 }

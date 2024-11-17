@@ -18,12 +18,10 @@ fun formatCurrency(amount: Double): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    settingsViewModel: SettingsViewModel = viewModel()
+    settingsViewModel: SettingsViewModel,
+    onNavigateToBudget: () -> Unit,
+    onNavigateToCategories: () -> Unit
 ) {
-    val budgetState by settingsViewModel.budget.collectAsState()
-    var newBudgetInput by remember { mutableStateOf(budgetState.toString()) }
-    val isBudgetSaved by settingsViewModel.isBudgetSaved.collectAsState()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -39,45 +37,20 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                // Budget setting section
-                Text(
-                    text = "Current Budget: ${formatCurrency(budgetState)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                OutlinedTextField(
-                    value = newBudgetInput,
-                    onValueChange = { newBudgetInput = it },
-                    label = { Text("Set New Budget") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = newBudgetInput.isNotEmpty() && newBudgetInput.toDoubleOrNull() == null
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                FilledTonalButton(
+                    onClick = onNavigateToBudget,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Button(
-                        onClick = {
-                            val budget = newBudgetInput.toDoubleOrNull()
-                            if (budget != null) {
-                                settingsViewModel.saveBudget(budget)
-                            }
-                        },
-                        enabled = newBudgetInput.toDoubleOrNull() != null
-                    ) {
-                        Text("Save Budget")
-                    }
+                    Text("Set Budget")
                 }
+            }
 
-                if (isBudgetSaved) {
-                    Text(
-                        text = "Budget saved successfully!",
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+            item {
+                FilledTonalButton(
+                    onClick = onNavigateToCategories,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Manage Categories")
                 }
             }
         }

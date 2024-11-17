@@ -15,16 +15,6 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromExpenseCategory(value: ExpenseCategory): String {
-        return value.name
-    }
-
-    @TypeConverter
-    fun toExpenseCategory(value: String): ExpenseCategory {
-        return ExpenseCategory.valueOf(value)
-    }
-
-    @TypeConverter
     fun fromRecurringPeriod(value: RecurringPeriod?): String? {
         return value?.name
     }

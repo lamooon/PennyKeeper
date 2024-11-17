@@ -1,13 +1,11 @@
 package com.example.pennykeeper.ui.home
-import androidx.compose.foundation.clickable
+
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
@@ -17,12 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.pennykeeper.data.model.Expense
-import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +29,13 @@ fun AddScreen(
     var place by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(ExpenseCategory.OTHER) }
+    var selectedCategory by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var isRecurring by remember { mutableStateOf(false) }
     var selectedRecurringPeriod by remember { mutableStateOf<RecurringPeriod?>(null) }
-    var categoryExpanded by remember { mutableStateOf(false) }
     var recurringPeriodExpanded by remember { mutableStateOf(false) }
 
+    val categories by viewModel.categories.collectAsState(initial = emptyList())
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
@@ -59,7 +55,7 @@ fun AddScreen(
                 title = { Text("Add New Transaction") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -117,7 +113,7 @@ fun AddScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = selectedCategory.name,
+                    value = selectedCategory.ifEmpty { "Select Category" },
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Category") },
@@ -131,11 +127,11 @@ fun AddScreen(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    ExpenseCategory.values().forEach { category ->
+                    categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
-                                selectedCategory = category
+                                selectedCategory = category.name
                                 expanded = false
                             }
                         )
@@ -159,7 +155,7 @@ fun AddScreen(
                 )
             }
 
-            // Recurring Period Dropdown (visible only if isRecurring is true)
+            // Recurring Period Dropdown
             if (isRecurring) {
                 ExposedDropdownMenuBox(
                     expanded = recurringPeriodExpanded,
@@ -203,14 +199,18 @@ fun AddScreen(
             // Save Button
             Button(
                 onClick = {
-                    if (place.isNotBlank() && amount.isNotBlank() && selectedDate.isNotBlank()) {
+                    if (place.isNotBlank() && amount.isNotBlank() &&
+                        selectedDate.isNotBlank() && selectedCategory.isNotBlank()) {
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         viewModel.addExpense(
-                            Expense(
-                                place = place,
+                            ExpenseUiModel(
                                 amount = amount.toDouble(),
-                                date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                    .parse(selectedDate)!!,
-                                category = selectedCategory
+                                place = place,
+                                categoryName = selectedCategory,
+                                date = dateFormat.parse(selectedDate)!!,
+                                isRecurring = isRecurring,
+                                recurringPeriod = selectedRecurringPeriod,
+                                nextDueDate = null // This will be calculated in ViewModel
                             )
                         )
                         onBack()
@@ -221,7 +221,9 @@ fun AddScreen(
                     .height(56.dp),
                 enabled = place.isNotBlank() &&
                         amount.isNotBlank() &&
-                        selectedDate.isNotBlank()
+                        selectedDate.isNotBlank() &&
+                        selectedCategory.isNotBlank() &&
+                        (!isRecurring || selectedRecurringPeriod != null)
             ) {
                 Text("Save Expense")
             }
