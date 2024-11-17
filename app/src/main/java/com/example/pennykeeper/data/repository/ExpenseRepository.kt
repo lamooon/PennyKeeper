@@ -53,6 +53,7 @@ class ExpenseRepository(
         }
     }
 
+    // In ExpenseRepository.kt
     fun getExpensesByPeriod(period: TimePeriod, date: Date = Date()): Flow<List<ExpenseUiModel>> {
         return expenses.map { expenseList ->
             val calendar = Calendar.getInstance()
@@ -74,18 +75,30 @@ class ExpenseRepository(
                     val currentMonth = calendar.get(Calendar.MONTH)
                     val currentYear = calendar.get(Calendar.YEAR)
 
-                    expenseList.filter {
-                        val expenseDate = Calendar.getInstance().apply { time = it.date }
-                        expenseDate.get(Calendar.MONTH) == currentMonth &&
-                                expenseDate.get(Calendar.YEAR) == currentYear
+                    expenseList.filter { expense ->
+                        val expenseDate = Calendar.getInstance().apply { time = expense.date }
+                        val expenseMonth = expenseDate.get(Calendar.MONTH)
+                        val expenseYear = expenseDate.get(Calendar.YEAR)
+
+                        if (!expense.isRecurring) {
+                            expenseMonth == currentMonth && expenseYear == currentYear
+                        } else if (expense.recurringPeriod == RecurringPeriod.MONTHLY) {
+                            expenseYear < currentYear || (expenseYear == currentYear && expenseMonth <= currentMonth)
+                        } else false
                     }
                 }
                 TimePeriod.YEAR -> {
                     val currentYear = calendar.get(Calendar.YEAR)
 
-                    expenseList.filter {
-                        val expenseDate = Calendar.getInstance().apply { time = it.date }
-                        expenseDate.get(Calendar.YEAR) == currentYear
+                    expenseList.filter { expense ->
+                        val expenseDate = Calendar.getInstance().apply { time = expense.date }
+                        val expenseYear = expenseDate.get(Calendar.YEAR)
+
+                        if (!expense.isRecurring) {
+                            expenseYear == currentYear
+                        } else {
+                            expenseYear <= currentYear
+                        }
                     }
                 }
             }
@@ -203,8 +216,6 @@ class ExpenseRepository(
         calendar.time = currentDate
 
         when (period) {
-            RecurringPeriod.DAILY -> calendar.add(Calendar.DAY_OF_MONTH, 1)
-            RecurringPeriod.WEEKLY -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
             RecurringPeriod.MONTHLY -> calendar.add(Calendar.MONTH, 1)
             RecurringPeriod.YEARLY -> calendar.add(Calendar.YEAR, 1)
         }

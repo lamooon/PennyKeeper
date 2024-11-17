@@ -82,8 +82,6 @@ class HomeViewModel(
         calendar.time = currentDate
 
         when (recurringPeriod) {
-            RecurringPeriod.DAILY -> calendar.add(Calendar.DAY_OF_MONTH, 1)
-            RecurringPeriod.WEEKLY -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
             RecurringPeriod.MONTHLY -> calendar.add(Calendar.MONTH, 1)
             RecurringPeriod.YEARLY -> calendar.add(Calendar.YEAR, 1)
         }

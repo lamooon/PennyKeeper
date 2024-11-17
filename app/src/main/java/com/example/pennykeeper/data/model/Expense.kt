@@ -31,8 +31,6 @@ data class Expense(
 )
 
 enum class RecurringPeriod {
-    DAILY,
-    WEEKLY,
     MONTHLY,
     YEARLY
 }
