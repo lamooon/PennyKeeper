@@ -6,20 +6,21 @@ import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
 import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
+import com.example.pennykeeper.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Date
 
 class HomeViewModel(
     private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState = _uiState.asStateFlow()
-
-    val categories = categoryRepository.categories
+    // Fetch daily budget directly as a flow
+    val dailyBudgetFlow = settingsRepository.getDailyBudgetFlow()
 
     val expenses = expenseRepository.expenses
         .map { it.sortedByDescending { expense -> expense.date } }
@@ -28,6 +29,19 @@ class HomeViewModel(
             SharingStarted.WhileSubscribed(5000),
             emptyList()
         )
+
+    private val todayExpenses = expenses.map { expenseList ->
+        expenseList.filter { isToday(it.date) }.sumOf { it.amount }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        0.0
+    )
+
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState = _uiState.asStateFlow()
+
+    val categories = categoryRepository.categories
 
     val totalExpenses = expenses.map { expenseList ->
         expenseList.sumOf { it.amount }
@@ -91,6 +105,13 @@ class HomeViewModel(
 
     fun resetExpenseAddedState() {
         _uiState.update { it.copy(isExpenseAdded = false) }
+    }
+
+    private fun isToday(date: Date): Boolean {
+        val today = Calendar.getInstance()
+        val expenseDate = Calendar.getInstance().apply { time = date }
+        return today.get(Calendar.YEAR) == expenseDate.get(Calendar.YEAR) &&
+                today.get(Calendar.DAY_OF_YEAR) == expenseDate.get(Calendar.DAY_OF_YEAR)
     }
 }
 

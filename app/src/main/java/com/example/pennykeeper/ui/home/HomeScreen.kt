@@ -17,6 +17,7 @@ import com.example.pennykeeper.data.model.ExpenseUiModel
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Locale
+
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
@@ -24,6 +25,17 @@ fun HomeScreen(
     onNavigateToAdd: () -> Unit,
 ) {
     val expenses by homeViewModel.expenses.collectAsState()
+    val dailyLimit by homeViewModel.dailyBudgetFlow.collectAsState(initial = 0.0)
+
+    // Compute the spent amount for today
+    val spentAmount = remember(expenses) {
+        val today = Calendar.getInstance()
+        expenses.filter { expense ->
+            val expenseDate = Calendar.getInstance().apply { time = expense.date }
+            expenseDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                    expenseDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+        }.sumOf { it.amount }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -33,12 +45,13 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(bottom = 80.dp)
         ) {
+
             Box(
                 modifier = Modifier
                     .weight(0.33f)
                     .fillMaxWidth()
             ) {
-                HabitTrackerSection()
+                HabitTrackerSection(dailyLimit = dailyLimit, spentAmount = spentAmount)
             }
 
             Box(
@@ -94,15 +107,71 @@ fun HomeScreen(
     }
 }
 
+//@Composable
+//private fun HabitTrackerSection() {
+//    // Placeholder for Habit Tracker
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(16.dp)
+//    ) {
+//        // Habit Tracker implementation will go here
+//    }
+//}
+
+
 @Composable
-private fun HabitTrackerSection() {
-    // Placeholder for Habit Tracker
-    Box(
+private fun HabitTrackerSection(
+    dailyLimit: Double,
+    spentAmount: Double
+) {
+    val remainingBudget = dailyLimit - spentAmount
+    val progress = if (dailyLimit > 0) {
+        (spentAmount / dailyLimit).coerceIn(0.0, 1.0)
+    } else {
+        0f
+    }
+
+    Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(16.dp)
     ) {
-        // Habit Tracker implementation will go here
+        // Daily Limit Text
+        Text(
+            text = "Daily Limit: $${String.format("%.2f", dailyLimit)}",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        // Progress Bar
+        Spacer(modifier = Modifier.height(8.dp))
+        LinearProgressIndicator(
+            progress = { progress.toFloat() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+        )
+
+        // Spent and Remaining Text
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Spent: $${String.format("%.2f", spentAmount)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "Remaining: $${String.format("%.2f", remainingBudget)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
@@ -171,4 +240,6 @@ private fun ExpenseCard(
             }
         }
     }
+
+
 }

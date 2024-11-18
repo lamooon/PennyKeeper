@@ -16,6 +16,7 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     // Expose the budget as a StateFlow for the UI to observe
+    // Expose the budget as a StateFlow for the UI to observe
     val budget: StateFlow<Double> = settingsRepository.getCurrentBudget()
         .map { it.dailyBudget }  // Extract the daily budget from the Budget model
         .stateIn(
