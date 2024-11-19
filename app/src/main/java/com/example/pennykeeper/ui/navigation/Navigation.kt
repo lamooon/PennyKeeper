@@ -28,12 +28,14 @@ import com.example.pennykeeper.AppViewModelFactory
 import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.data.repository.SettingsRepository
+import com.example.pennykeeper.data.repository.ThemeRepository
 import com.example.pennykeeper.ui.expense.EditExpenseScreen
 import com.example.pennykeeper.ui.expense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.AddScreen
 import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
 import com.example.pennykeeper.ui.settings.CategoryViewModel
+import com.example.pennykeeper.ui.settings.DisplayModeScreen
 import com.example.pennykeeper.ui.settings.ManageCategoriesScreen
 import com.example.pennykeeper.ui.settings.PredictionScreen
 import com.example.pennykeeper.ui.settings.SetBudgetScreen
@@ -44,9 +46,9 @@ import com.example.pennykeeper.ui.stats.StatisticsViewModel
 
 
 @Composable
-fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: SettingsRepository, categoryRepository: CategoryRepository) {
+fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: SettingsRepository, categoryRepository: CategoryRepository, themeRepository: ThemeRepository) {
     val navController = rememberNavController()
-    val factory = AppViewModelFactory(expenseRepository,settingsRepository, categoryRepository)
+    val factory = AppViewModelFactory(expenseRepository,settingsRepository, categoryRepository, themeRepository )
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
@@ -105,7 +107,8 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
                     settingsViewModel = settingsViewModel,
                     onNavigateToBudget = { navController.navigate(NavigationDestination.SetBudget.route) },
                     onNavigateToCategories = { navController.navigate(NavigationDestination.ManageCategories.route) },
-                    onNavigateToPrediction = { navController.navigate(NavigationDestination.ExpensePrediction.route) }
+                    onNavigateToPrediction = { navController.navigate(NavigationDestination.ExpensePrediction.route) },
+                    onNavigateToDisplay = { navController.navigate(NavigationDestination.DisplayMode.route) }
                 )
             }
 
@@ -132,9 +135,18 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+
+            composable(NavigationDestination.DisplayMode.route) {
+                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
+                DisplayModeScreen(
+                    settingsViewModel = settingsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
+
 
 @Composable
 private fun BottomNavigationBar(navController: NavController) {

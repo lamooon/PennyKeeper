@@ -7,6 +7,7 @@ import com.example.pennykeeper.data.dao.ExpenseDao
 import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.data.repository.SettingsRepository
+import com.example.pennykeeper.data.repository.ThemeRepository
 import com.example.pennykeeper.ui.expense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.HomeViewModel
 import com.example.pennykeeper.ui.settings.CategoryViewModel
@@ -16,8 +17,8 @@ import com.example.pennykeeper.ui.stats.StatisticsViewModel
 class AppViewModelFactory(
     private val expenseRepository: ExpenseRepository,
     private val settingsRepository: SettingsRepository,
-    private val categoryRepository: CategoryRepository
-
+    private val categoryRepository: CategoryRepository,
+    private val themeRepository: ThemeRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -29,8 +30,9 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(StatisticsViewModel::class.java) -> {
                 StatisticsViewModel(expenseRepository) as T
             }
+
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
-                SettingsViewModel(settingsRepository, expenseRepository) as T
+                SettingsViewModel(settingsRepository, expenseRepository, themeRepository) as T
             }
 
             modelClass.isAssignableFrom(EditExpenseViewModel::class.java) -> {

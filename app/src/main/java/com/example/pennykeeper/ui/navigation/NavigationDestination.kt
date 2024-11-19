@@ -7,6 +7,8 @@ sealed class NavigationDestination(val route: String) {
     object SetBudget : NavigationDestination("settings/budget")
     object ManageCategories : NavigationDestination("settings/categories")
     object ExpensePrediction : NavigationDestination("settings/prediction")
+    object DisplayMode : NavigationDestination("settings/displaymode")
+
 
     object EditExpense : NavigationDestination("edit/{expenseId}") {
         fun createRoute(expenseId: Int) = "edit/$expenseId"

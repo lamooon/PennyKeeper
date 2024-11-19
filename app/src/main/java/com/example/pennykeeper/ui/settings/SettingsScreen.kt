@@ -20,7 +20,8 @@ fun SettingsScreen(
     settingsViewModel: SettingsViewModel,
     onNavigateToBudget: () -> Unit,
     onNavigateToCategories: () -> Unit,
-    onNavigateToPrediction: () -> Unit
+    onNavigateToPrediction: () -> Unit,
+    onNavigateToDisplay: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -60,6 +61,15 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Expense Prediction")
+                }
+            }
+
+            item {
+                FilledTonalButton(
+                    onClick = onNavigateToDisplay,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Display Mode")
                 }
             }
         }
