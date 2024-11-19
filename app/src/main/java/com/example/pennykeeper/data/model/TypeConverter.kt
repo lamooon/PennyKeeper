@@ -3,6 +3,10 @@ package com.example.pennykeeper.data.model
 import androidx.room.TypeConverter
 import java.util.Date
 
+/**
+ * This file is used so we can filter by dates primarily on statisticscreen or prediction model.
+ */
+
 class Converters {
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {

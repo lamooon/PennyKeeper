@@ -15,6 +15,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * This DB file will destroy (via .fallBackToDestructiveMigration) and rebuild the DB file.
+ * It will insert prefilled categories (which users cannot delete or update)
+ */
+
 @Database(
     entities = [Expense::class, CategoryEntity::class],
     version = 3,

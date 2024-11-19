@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -25,7 +24,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.RecurringPeriod
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditExpenseScreen(
     viewModel: EditExpenseViewModel,
@@ -190,7 +189,7 @@ fun EditExpenseScreen(
                             expanded = periodExpanded,
                             onDismissRequest = { periodExpanded = false }
                         ) {
-                            RecurringPeriod.values().forEach { period ->
+                            RecurringPeriod.entries.forEach { period ->
                                 DropdownMenuItem(
                                     text = { Text(period.name) },
                                     onClick = {

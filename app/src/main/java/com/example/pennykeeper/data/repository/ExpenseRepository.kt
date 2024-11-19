@@ -1,7 +1,7 @@
 package com.example.pennykeeper.data.repository
 
 import com.example.pennykeeper.data.dao.ExpenseDao
-import com.example.pennykeeper.data.dao.CategoryDao // You'll need to add this
+import com.example.pennykeeper.data.dao.CategoryDao
 import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
@@ -35,24 +35,6 @@ class ExpenseRepository(
         }
     }
 
-    val recurringExpenses: Flow<List<ExpenseUiModel>> = combine(
-        expenseDao.getRecurringExpenses(),
-        categoryDao.getAllCategories()
-    ) { expenses, categories ->
-        expenses.map { expense ->
-            val category = categories.find { it.id == expense.categoryId }
-            ExpenseUiModel(
-                id = expense.id,
-                amount = expense.amount,
-                place = expense.place,
-                categoryName = category?.name ?: "Unknown",
-                date = expense.date,
-                isRecurring = expense.isRecurring,
-                recurringPeriod = expense.recurringPeriod,
-                nextDueDate = expense.nextDueDate
-            )
-        }
-    }
 
     fun getExpensesByPeriod(period: TimePeriod, date: Date = Date()): Flow<List<ExpenseUiModel>> {
         return expenses.map { expenseList ->
@@ -61,7 +43,6 @@ class ExpenseRepository(
 
             when (period) {
                 TimePeriod.WEEK -> {
-                    // Week logic remains the same
                     val startCalendar = calendar.clone() as Calendar
                     startCalendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
                     val endCalendar = startCalendar.clone() as Calendar
@@ -91,7 +72,7 @@ class ExpenseRepository(
                                     (expenseYear < currentYear || (expenseYear == currentYear && expenseMonth <= currentMonth)) -> {
                                 expense
                             }
-                            // Yearly recurring expenses - divide into 12
+                            // Yearly recurring expenses
                             expense.isRecurring && expense.recurringPeriod == RecurringPeriod.YEARLY &&
                                     isExpenseActiveInYear(expenseDate, calendar) -> {
                                 expense.copy(amount = expense.amount / 12)
@@ -127,7 +108,6 @@ class ExpenseRepository(
         val expenseYear = expenseDate.get(Calendar.YEAR)
         val currentYear = currentDate.get(Calendar.YEAR)
 
-        // Check if the expense is active in the current year
         return expenseYear <= currentYear
     }
 
@@ -196,57 +176,6 @@ class ExpenseRepository(
             recurringPeriod = expense.recurringPeriod,
             nextDueDate = expense.nextDueDate
         )
-    }
-
-    fun getDueRecurringExpenses(date: Date): Flow<List<ExpenseUiModel>> {
-        return combine(
-            expenseDao.getDueRecurringExpenses(date),
-            categoryDao.getAllCategories()
-        ) { expenses, categories ->
-            expenses.map { expense ->
-                val category = categories.find { it.id == expense.categoryId }
-                ExpenseUiModel(
-                    id = expense.id,
-                    amount = expense.amount,
-                    place = expense.place,
-                    categoryName = category?.name ?: "Unknown",
-                    date = expense.date,
-                    isRecurring = expense.isRecurring,
-                    recurringPeriod = expense.recurringPeriod,
-                    nextDueDate = expense.nextDueDate
-                )
-            }
-        }
-    }
-
-    suspend fun updateRecurringExpenseNextDueDate(expense: ExpenseUiModel) {
-        val nextDueDate = calculateNextDueDate(expense.date, expense.recurringPeriod!!)
-        val categoryId = categoryDao.getCategoryByName(expense.categoryName)?.id
-            ?: throw IllegalArgumentException("Category not found")
-
-        val dbExpense = Expense(
-            id = expense.id,
-            amount = expense.amount,
-            place = expense.place,
-            categoryId = categoryId,
-            date = expense.date,
-            isRecurring = expense.isRecurring,
-            recurringPeriod = expense.recurringPeriod,
-            nextDueDate = nextDueDate
-        )
-        expenseDao.updateExpense(dbExpense)
-    }
-
-    private fun calculateNextDueDate(currentDate: Date, period: RecurringPeriod): Date {
-        val calendar = Calendar.getInstance()
-        calendar.time = currentDate
-
-        when (period) {
-            RecurringPeriod.MONTHLY -> calendar.add(Calendar.MONTH, 1)
-            RecurringPeriod.YEARLY -> calendar.add(Calendar.YEAR, 1)
-        }
-
-        return calendar.time
     }
 
     //for prediction service

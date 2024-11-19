@@ -2,6 +2,14 @@ package com.example.pennykeeper.data.model
 
 import java.util.Date
 
+/**
+ *
+ * This is different from Expense.kt,
+ * This is UI representation that does not need
+ * Room DB assistance - using this so it's easier to reference in homescreen and statsscreen.
+ *
+ */
+
 data class ExpenseUiModel(
     val id: Int = 0,
     val amount: Double,
@@ -13,10 +21,3 @@ data class ExpenseUiModel(
     val nextDueDate: Date? = null
 )
 
-/**
- *
- * This is different from Expense.kt,
- * This is UI representation that does not need
- * Room DB assistance - using this so it's easier to reference in homescreen and statsscreen.
- *
- */

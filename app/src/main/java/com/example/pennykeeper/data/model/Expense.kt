@@ -6,6 +6,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.Date
 
+/**
+ * This is an expense file where user stores their transactions on Room DB
+ */
+
 @Entity(
     tableName = "expenses",
     foreignKeys = [

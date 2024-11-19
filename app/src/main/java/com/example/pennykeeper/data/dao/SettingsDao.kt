@@ -7,6 +7,9 @@ import androidx.room.Query
 import com.example.pennykeeper.data.model.Budget
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * This file allows users to set their daily budgets
+ */
 @Dao
 interface SettingsDao {
 

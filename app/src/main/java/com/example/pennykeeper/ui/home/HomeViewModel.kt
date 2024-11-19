@@ -9,7 +9,6 @@ import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Date
 

@@ -1,5 +1,6 @@
 package com.example.pennykeeper.ui.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseUiModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -107,19 +107,7 @@ fun HomeScreen(
     }
 }
 
-//@Composable
-//private fun HabitTrackerSection() {
-//    // Placeholder for Habit Tracker
-//    Box(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp)
-//    ) {
-//        // Habit Tracker implementation will go here
-//    }
-//}
-
-
+@SuppressLint("DefaultLocale")
 @Composable
 private fun HabitTrackerSection(
     dailyLimit: Double,
@@ -175,6 +163,7 @@ private fun HabitTrackerSection(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 private fun ExpenseCard(
     expense: ExpenseUiModel,

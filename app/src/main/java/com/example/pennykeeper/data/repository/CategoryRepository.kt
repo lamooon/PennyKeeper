@@ -4,6 +4,10 @@ import com.example.pennykeeper.data.dao.CategoryDao
 import com.example.pennykeeper.data.model.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Acts as an API file for category file between server and DB
+ */
+
 class CategoryRepository(private val categoryDao: CategoryDao) {
     val categories: Flow<List<CategoryEntity>> = categoryDao.getAllCategories()
     val defaultCategories: Flow<List<CategoryEntity>> = categoryDao.getDefaultCategories()

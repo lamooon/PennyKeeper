@@ -5,6 +5,9 @@ import com.example.pennykeeper.data.model.Expense
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
+/**
+ * This file allows user to add, update, delete the transactions.
+ */
 @Dao
 interface ExpenseDao {
     @Query("SELECT * FROM expenses")

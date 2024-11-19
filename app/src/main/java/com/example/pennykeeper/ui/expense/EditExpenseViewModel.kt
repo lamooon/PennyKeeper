@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pennykeeper.data.model.CategoryEntity
-import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
 import com.example.pennykeeper.data.repository.CategoryRepository
@@ -17,7 +16,6 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 
-// EditExpenseViewModel.kt
 class EditExpenseViewModel(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository

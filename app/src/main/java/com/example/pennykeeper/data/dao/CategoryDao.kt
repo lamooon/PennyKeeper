@@ -4,6 +4,9 @@ import androidx.room.*
 import com.example.pennykeeper.data.model.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * This is an interface so user can add, update, delete the categories as they wish
+ */
 @Dao
 interface CategoryDao {
     @Query("SELECT * FROM categories")
