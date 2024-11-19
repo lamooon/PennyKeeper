@@ -1,11 +1,28 @@
 package com.example.pennykeeper.ui.expense
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.pennykeeper.data.model.ExpenseCategory
+import com.example.pennykeeper.data.model.RecurringPeriod
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -14,119 +31,190 @@ fun EditExpenseScreen(
     expenseId: Int,
     onNavigateBack: () -> Unit
 ) {
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val expense by viewModel.expense.collectAsState()
-
     LaunchedEffect(expenseId) {
         viewModel.loadExpense(expenseId)
     }
 
-    expense?.let { currentExpense ->
-        var amount by remember { mutableStateOf(currentExpense.amount.toString()) }
-        var place by remember { mutableStateOf(currentExpense.place) }
-        var category by remember { mutableStateOf(currentExpense.category) }
-        var showCategoryDropdown by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
+    var periodExpanded by remember { mutableStateOf(false) }
+    val categories by viewModel.categories.collectAsState()
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            TextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("Amount") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-            TextField(
-                value = place,
-                onValueChange = { place = it },
-                label = { Text("Place") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
+    val amountFocusRequester = remember { FocusRequester() }
+    val placeFocusRequester = remember { FocusRequester() }
 
-            Box(modifier = Modifier.padding(vertical = 8.dp)) {
-                OutlinedButton(
-                    onClick = { showCategoryDropdown = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(category.name)
-                }
-                DropdownMenu(
-                    expanded = showCategoryDropdown,
-                    onDismissRequest = { showCategoryDropdown = false }
-                ) {
-                    ExpenseCategory.values().forEach { expenseCategory ->
-                        DropdownMenuItem(
-                            text = { Text(expenseCategory.name) },
-                            onClick = {
-                                category = expenseCategory
-                                showCategoryDropdown = false
-                            }
-                        )
-                    }
-                }
-            }
+    val interactionSource = remember { MutableInteractionSource() }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
             ) {
-                Button(
-                    onClick = {
-                        val amountDouble = amount.toDoubleOrNull() ?: 0.0
-                        if (amountDouble > 0 && place.isNotBlank()) {
-                            viewModel.updateExpense(amountDouble, place, category)
-                            onNavigateBack()
+                categoryExpanded = false
+                periodExpanded = false
+                focusManager.clearFocus()
+            }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (expenseId == -1) "Add Expense" else "Edit Expense") },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        if (expenseId != -1) {
+                            IconButton(onClick = {
+                                viewModel.deleteExpense(onNavigateBack)
+                            }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                            }
                         }
                     }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(padding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = viewModel.amount,
+                    onValueChange = {
+                        if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            viewModel.updateAmount(it)
+                        }
+                    },
+                    label = { Text("Amount") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(amountFocusRequester),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    ),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = viewModel.place,
+                    onValueChange = { viewModel.updatePlace(it) },
+                    label = { Text("Place") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(placeFocusRequester),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    singleLine = true
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it },
                 ) {
-                    Text("Update")
+                    OutlinedTextField(
+                        value = viewModel.categoryName,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("Category") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
+                    ) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.name) },
+                                onClick = {
+                                    viewModel.updateCategory(category)
+                                    categoryExpanded = false
+                                }
+                            )
+                        }
+                    }
                 }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Recurring Expense")
+                    Switch(
+                        checked = viewModel.isRecurring,
+                        onCheckedChange = { viewModel.updateRecurring(it) }
+                    )
+                }
+
+                if (viewModel.isRecurring) {
+                    ExposedDropdownMenuBox(
+                        expanded = periodExpanded,
+                        onExpandedChange = { periodExpanded = it },
+                    ) {
+                        OutlinedTextField(
+                            value = viewModel.recurringPeriod?.name ?: "Select Period",
+                            onValueChange = { },
+                            readOnly = true,
+                            label = { Text("Recurring Period") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = periodExpanded,
+                            onDismissRequest = { periodExpanded = false }
+                        ) {
+                            RecurringPeriod.entries.forEach { period ->
+                                DropdownMenuItem(
+                                    text = { Text(period.name) },
+                                    onClick = {
+                                        viewModel.updateRecurringPeriod(period)
+                                        periodExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { showDeleteConfirmation = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                    onClick = {
+                        keyboardController?.hide()
+                        viewModel.saveExpense(onNavigateBack)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = viewModel.isValid()
                 ) {
-                    Text("Delete")
+                    Text(if (expenseId == -1) "Add" else "Save")
                 }
             }
-        }
-
-        if (showDeleteConfirmation) {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirmation = false },
-                title = { Text("Delete Expense") },
-                text = { Text("Are you sure you want to delete this expense?") },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.deleteExpense()
-                            showDeleteConfirmation = false
-                            onNavigateBack()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Text("Delete")
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { showDeleteConfirmation = false }) {
-                        Text("Cancel")
-                    }
-                }
-            )
         }
     }
 }
