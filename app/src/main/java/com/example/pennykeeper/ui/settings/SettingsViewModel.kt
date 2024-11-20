@@ -1,20 +1,33 @@
 package com.example.pennykeeper.ui.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.data.repository.SettingsRepository
+import com.example.pennykeeper.data.repository.ThemeRepository
 import com.example.pennykeeper.utils.ExpensePrediction
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
+import com.example.pennykeeper.ui.theme.getThemePreference
+import com.example.pennykeeper.ui.theme.saveThemePreference
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val expenseRepository: ExpenseRepository  // Add 'private val' here
+    private val expenseRepository: ExpenseRepository, // Add 'private val' here
+    private val themeRepository: ThemeRepository
 ) : ViewModel() {
 
+    val isDarkMode = themeRepository.isDarkMode
+
+    // Toggle dark mode and update both UI state and SharedPreferences
+    fun toggleTheme(isDark: Boolean) {
+        viewModelScope.launch {
+            themeRepository.toggleDarkMode()
+        }
+    }
     // Expose the budget as a StateFlow for the UI to observe
     // Expose the budget as a StateFlow for the UI to observe
     val budget: StateFlow<Double> = settingsRepository.getCurrentBudget()

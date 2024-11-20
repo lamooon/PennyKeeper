@@ -1,6 +1,7 @@
 package com.example.pennykeeper.ui.home
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,11 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.ExpenseUiModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Locale
+
 
 @Composable
 fun HomeScreen(
@@ -37,74 +42,125 @@ fun HomeScreen(
         }.sumOf { it.amount }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 80.dp)
-        ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
-            Box(
-                modifier = Modifier
-                    .weight(0.33f)
-                    .fillMaxWidth()
-            ) {
-                HabitTrackerSection(dailyLimit = dailyLimit, spentAmount = spentAmount)
+    // Determine message based on spending ratio
+    val message = when {
+        dailyLimit == 0.0 -> ""
+        spentAmount / dailyLimit > 1.0 -> "🚨 You've exceeded your budget! 🐷💸"
+        spentAmount / dailyLimit > 0.8 -> "⚠️ You're at ${"%.1f".format((spentAmount / dailyLimit) * 100)}%! 🐷"
+        spentAmount / dailyLimit > 0.5 -> "😊 Keep an eye on spending: ${"%.1f".format((spentAmount / dailyLimit) * 100)}%."
+        spentAmount / dailyLimit > 0.3 -> "👍 Doing well! ${"%.1f".format((spentAmount / dailyLimit) * 100)}% used. 🌟"
+        spentAmount / dailyLimit > 0.1 -> "✨ Great start! ${"%.1f".format((spentAmount / dailyLimit) * 100)}% spent. 🌈"
+        else -> ""
+    }
+
+    // Show the appropriate snackbar message
+    LaunchedEffect(spentAmount, dailyLimit) {
+        if (message.isNotEmpty()) {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    message = message,
+                    duration = SnackbarDuration.Long
+                )
             }
+        }
+    }
 
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToAdd,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Expense")
+            }
+        },
+        content = { paddingValues ->
             Box(
                 modifier = Modifier
-                    .weight(0.67f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
-                if (expenses.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 80.dp)
+                ) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Press + button to add expenses.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .weight(0.33f)
+                            .fillMaxWidth()
                     ) {
-                        item {
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
+                        HabitTrackerSection(dailyLimit = dailyLimit, spentAmount = spentAmount)
+                    }
 
-                        items(expenses) { expense ->
-                            ExpenseCard(
-                                expense = expense,
-                                onClick = { onNavigateToEdit(expense.id) }
-                            )
-                        }
+                    // SnackbarHost with centered text
+                    SnackbarHost(
+                        hostState = snackbarHostState,
+                        snackbar = { snackbarData ->
+                            Snackbar(
+                                modifier = Modifier.fillMaxWidth(),
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            ) {
+                                Text(
+                                    text = snackbarData.visuals.message,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSecondary
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
 
-                        item {
-                            Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .weight(0.67f)
+                            .fillMaxWidth()
+                    ) {
+                        if (expenses.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Press + button to add expenses.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                item {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
+
+                                items(expenses) { expense ->
+                                    ExpenseCard(
+                                        expense = expense,
+                                        onClick = { onNavigateToEdit(expense.id) }
+                                    )
+                                }
+
+                                item {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-
-        FloatingActionButton(
-            onClick = onNavigateToAdd,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add Expense")
-        }
-    }
+    )
 }
 
 @SuppressLint("DefaultLocale")
