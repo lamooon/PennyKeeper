@@ -21,6 +21,13 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Locale
+import android.app.Activity
+import android.speech.RecognizerIntent
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Face
+import com.example.pennykeeper.util.SpeechRecognitionHelper
 
 
 @Composable
@@ -31,6 +38,109 @@ fun HomeScreen(
 ) {
     val expenses by homeViewModel.expenses.collectAsState()
     val dailyLimit by homeViewModel.dailyBudgetFlow.collectAsState(initial = 0.0)
+
+    val activity = LocalContext.current as Activity
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText: String? =
+                result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
+            Log.d("SpeechDebug", "Raw spoken text: $spokenText")
+
+            spokenText?.let { text ->
+                // Parse amount
+                val amountRegex = Regex("""(\d+(?:\.\d{1,2})?)""")
+                val amountMatch = amountRegex.find(text)
+                val amount = amountMatch?.groupValues?.get(1)
+                Log.d("SpeechDebug", "Extracted amount: $amount")
+
+                // Parse date
+                val calendar = Calendar.getInstance()
+
+                val date = when {
+                    // Handle "on the Xth/Xst/Xnd/Xrd"
+                    text.contains(Regex("""on the (\d+)(st|nd|rd|th)""", RegexOption.IGNORE_CASE)) -> {
+                        val dayMatch = Regex("""on the (\d+)""").find(text)
+                        val day = dayMatch?.groupValues?.get(1)?.toIntOrNull()
+                        if (day != null && day in 1..31) {
+                            calendar.set(Calendar.DAY_OF_MONTH, day)
+                        }
+                        calendar.time
+                    }
+
+                    // Handle "last [day]"
+                    text.contains(Regex("""last (monday|tuesday|wednesday|thursday|friday|saturday|sunday)""", RegexOption.IGNORE_CASE)) -> {
+                        val dayMatch = Regex("""last (monday|tuesday|wednesday|thursday|friday|saturday|sunday)""", RegexOption.IGNORE_CASE).find(text)
+                        val dayOfWeek = when (dayMatch?.groupValues?.get(1)?.lowercase()) {
+                            "sunday" -> Calendar.SUNDAY
+                            "monday" -> Calendar.MONDAY
+                            "tuesday" -> Calendar.TUESDAY
+                            "wednesday" -> Calendar.WEDNESDAY
+                            "thursday" -> Calendar.THURSDAY
+                            "friday" -> Calendar.FRIDAY
+                            "saturday" -> Calendar.SATURDAY
+                            else -> null
+                        }
+
+                        if (dayOfWeek != null) {
+                            // Move to previous week
+                            calendar.add(Calendar.WEEK_OF_YEAR, -1)
+                            // Set to the specified day
+                            while (calendar.get(Calendar.DAY_OF_WEEK) != dayOfWeek) {
+                                calendar.add(Calendar.DAY_OF_YEAR, 1)
+                            }
+                        }
+                        calendar.time
+                    }
+
+                    text.contains("yesterday", ignoreCase = true) -> {
+                        calendar.add(Calendar.DAY_OF_YEAR, -1)
+                        calendar.time
+                    }
+                    text.contains("tomorrow", ignoreCase = true) -> {
+                        calendar.add(Calendar.DAY_OF_YEAR, 1)
+                        calendar.time
+                    }
+                    else -> Date()
+                }
+
+                // Clean up the text to get place
+                var place = text
+                    // Remove common action words
+                    .replace(Regex("""^(add|spent|used|paid)\s+""", RegexOption.IGNORE_CASE), "")
+                    // Remove amount with possible dollar sign
+                    .replace(Regex("""\$?\s*\d+(?:\.\d{1,2})?"""), "")
+                    // Remove common prepositions
+                    .replace(Regex("""\s+(on|at|in)\s+""", RegexOption.IGNORE_CASE), " ")
+                    // Remove date references
+                    .replace(Regex("""\s+(yesterday|today|tomorrow)""", RegexOption.IGNORE_CASE), "")
+                    // Remove "on the Xth" date format
+                    .replace(Regex("""\s+on the \d+(st|nd|rd|th)""", RegexOption.IGNORE_CASE), "")
+                    // Remove "last [day]" format
+                    .replace(Regex("""\s+last (monday|tuesday|wednesday|thursday|friday|saturday|sunday)""", RegexOption.IGNORE_CASE), "")
+                    .trim()
+
+                Log.d("SpeechDebug", "Extracted place: $place")
+
+                if (amount != null) {
+                    Log.d("SpeechDebug", "Creating expense with amount: $amount, place: $place, date: $date")
+                    homeViewModel.addExpense(
+                        ExpenseUiModel(
+                            amount = amount.toDouble(),
+                            place = place,
+                            categoryName = "Other",
+                            date = date,
+                            isRecurring = false,
+                            recurringPeriod = null,
+                            nextDueDate = null
+                        )
+                    )
+                }
+            }
+        }
+    }
+
 
     // Compute the spent amount for today
     val spentAmount = remember(expenses) {
@@ -70,13 +180,27 @@ fun HomeScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToAdd,
-                modifier = Modifier.padding(16.dp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Expense")
+                FloatingActionButton(
+                    onClick = {
+                        SpeechRecognitionHelper.startSpeechRecognition(speechLauncher)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Face,
+                        contentDescription = "Voice Input"
+                    )
+                }
+                FloatingActionButton(
+                    onClick = onNavigateToAdd
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Expense")
+                }
             }
         },
+        floatingActionButtonPosition = FabPosition.End,
         content = { paddingValues ->
             Box(
                 modifier = Modifier
