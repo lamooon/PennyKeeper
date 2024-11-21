@@ -25,6 +25,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun getExpenseById(id: Int): Expense?
 
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAll()
+
     // uses foreign key
     @Query("SELECT * FROM expenses WHERE categoryId = :categoryId")
     fun getExpensesByCategory(categoryId: Int): Flow<List<Expense>>

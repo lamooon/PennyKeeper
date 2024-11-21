@@ -178,6 +178,10 @@ class ExpenseRepository(
         )
     }
 
+    suspend fun deleteAllExpenses() {
+        expenseDao.deleteAll()
+    }
+
     //for prediction service
     suspend fun getAllExpenses(): List<ExpenseUiModel> {
         return combine(

@@ -23,6 +23,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.RecurringPeriod
+import android.app.DatePickerDialog
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +52,22 @@ fun EditExpenseScreen(
 
     val interactionSource = remember { MutableInteractionSource() }
 
+    val context = LocalContext.current
+    val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+
+    val datePickerDialog = remember {
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val calendar = Calendar.getInstance()
+                calendar.set(year, month, dayOfMonth)
+                viewModel.updateDate(calendar.time)
+            },
+            Calendar.getInstance().get(Calendar.YEAR),
+            Calendar.getInstance().get(Calendar.MONTH),
+            Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+        )
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -126,6 +147,22 @@ fun EditExpenseScreen(
                         }
                     ),
                     singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = dateFormatter.format(viewModel.date),
+                    onValueChange = { },
+                    label = { Text("Date") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { datePickerDialog.show() },
+                    enabled = false,
+                    //because color didn't match with other fields for some reason
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
 
                 ExposedDropdownMenuBox(

@@ -106,6 +106,12 @@ class HomeViewModel(
         _uiState.update { it.copy(isExpenseAdded = false) }
     }
 
+    fun deleteAllExpenses() {
+        viewModelScope.launch {
+            expenseRepository.deleteAllExpenses()
+        }
+    }
+
     private fun isToday(date: Date): Boolean {
         val today = Calendar.getInstance()
         val expenseDate = Calendar.getInstance().apply { time = date }

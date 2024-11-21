@@ -1,7 +1,6 @@
 package com.example.pennykeeper.ui.home
 
 import android.annotation.SuppressLint
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.ExpenseUiModel
@@ -26,6 +24,7 @@ import android.speech.RecognizerIntent
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Face
 import com.example.pennykeeper.util.SpeechRecognitionHelper
 
@@ -39,7 +38,32 @@ fun HomeScreen(
     val expenses by homeViewModel.expenses.collectAsState()
     val dailyLimit by homeViewModel.dailyBudgetFlow.collectAsState(initial = 0.0)
 
-    val activity = LocalContext.current as Activity
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete All Expenses") },
+            text = { Text("Are you sure you want to delete all expenses? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        homeViewModel.deleteAllExpenses()
+                        showDeleteConfirmation = false
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    //speech recognizer
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -121,10 +145,8 @@ fun HomeScreen(
                     .replace(Regex("""\s+last (monday|tuesday|wednesday|thursday|friday|saturday|sunday)""", RegexOption.IGNORE_CASE), "")
                     .trim()
 
-                Log.d("SpeechDebug", "Extracted place: $place")
 
                 if (amount != null) {
-                    Log.d("SpeechDebug", "Creating expense with amount: $amount, place: $place, date: $date")
                     homeViewModel.addExpense(
                         ExpenseUiModel(
                             amount = amount.toDouble(),
@@ -183,6 +205,12 @@ fun HomeScreen(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                FloatingActionButton(
+                    onClick = { showDeleteConfirmation = true },
+                    containerColor = MaterialTheme.colorScheme.error
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete All")
+                }
                 FloatingActionButton(
                     onClick = {
                         SpeechRecognitionHelper.startSpeechRecognition(speechLauncher)
