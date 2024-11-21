@@ -35,6 +35,7 @@ import com.example.pennykeeper.ui.home.AddScreen
 import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
 import com.example.pennykeeper.ui.settings.CategoryViewModel
+import com.example.pennykeeper.ui.settings.ChatAnalysisScreen
 import com.example.pennykeeper.ui.settings.DisplayModeScreen
 import com.example.pennykeeper.ui.settings.ManageCategoriesScreen
 import com.example.pennykeeper.ui.settings.PredictionScreen
@@ -108,7 +109,8 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
                     onNavigateToBudget = { navController.navigate(NavigationDestination.SetBudget.route) },
                     onNavigateToCategories = { navController.navigate(NavigationDestination.ManageCategories.route) },
                     onNavigateToPrediction = { navController.navigate(NavigationDestination.ExpensePrediction.route) },
-                    onNavigateToDisplay = { navController.navigate(NavigationDestination.DisplayMode.route) }
+                    onNavigateToDisplay = { navController.navigate(NavigationDestination.DisplayMode.route) },
+                    onNavigateToChatAnalysis = { navController.navigate(NavigationDestination.ChatAnalysis.route) }
                 )
             }
 
@@ -131,6 +133,14 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
             composable(NavigationDestination.ExpensePrediction.route) {
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
                 PredictionScreen(
+                    settingsViewModel = settingsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(NavigationDestination.ChatAnalysis.route) {
+                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
+                ChatAnalysisScreen(
                     settingsViewModel = settingsViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )

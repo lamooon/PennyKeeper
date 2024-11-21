@@ -8,11 +8,10 @@ sealed class NavigationDestination(val route: String) {
     object ManageCategories : NavigationDestination("settings/categories")
     object ExpensePrediction : NavigationDestination("settings/prediction")
     object DisplayMode : NavigationDestination("settings/displaymode")
-
-
     object EditExpense : NavigationDestination("edit/{expenseId}") {
         fun createRoute(expenseId: Int) = "edit/$expenseId"
         const val expenseIdArg = "expenseId"
     }
     object AddExpense : NavigationDestination("add")
+    object ChatAnalysis : NavigationDestination("settings/chat")
 }

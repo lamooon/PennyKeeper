@@ -1,14 +1,35 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
 }
 
+val apiProperties = Properties().apply {
+    val apiPropertiesFile = rootProject.file("api.properties")
+    if (apiPropertiesFile.exists()) {
+        load(FileInputStream(apiPropertiesFile))
+    } else {
+        rootProject.file("api.properties").writeText(
+            "HUGGINGFACE_API_KEY=your_api_key_here"
+        )
+        throw GradleException(
+            "api.properties not found. Please create api.properties file based on api.properties.template"
+        )
+    }
+}
+
+
 android {
     namespace = "com.example.pennykeeper"
     compileSdk = 34
 
+
+
     defaultConfig {
+
         applicationId = "com.example.pennykeeper"
         minSdk = 28
         targetSdk = 34
@@ -19,9 +40,17 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        //load the api key
+        buildConfigField(
+            type = "String",
+            name = "HUGGINGFACE_API_KEY",
+            value = "\"${apiProperties.getProperty("HUGGINGFACE_API_KEY") ?: ""}\""
+        )
+
     }
 
-    // Rest of your configuration remains the same
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -40,6 +69,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -62,6 +92,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
+
+    //HTTP client for Chatbot
+    implementation(libs.okhttp)
+
 
     val nav_version = "2.8.3"
     implementation("androidx.navigation:navigation-compose:$nav_version")

@@ -32,7 +32,7 @@ class AppViewModelFactory(
             }
 
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
-                SettingsViewModel(settingsRepository, expenseRepository, themeRepository) as T
+                SettingsViewModel(settingsRepository, expenseRepository, categoryRepository, themeRepository) as T
             }
 
             modelClass.isAssignableFrom(EditExpenseViewModel::class.java) -> {

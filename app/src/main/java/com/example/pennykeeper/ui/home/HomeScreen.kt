@@ -132,7 +132,7 @@ fun HomeScreen(
                 // Clean up the text to get place
                 var place = text
                     // Remove common action words
-                    .replace(Regex("""^(add|spent|used|paid)\s+""", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("""^(add|spent|used|paid|spence)\s+""", RegexOption.IGNORE_CASE), "")
                     // Remove amount with possible dollar sign
                     .replace(Regex("""\$?\s*\d+(?:\.\d{1,2})?"""), "")
                     // Remove common prepositions

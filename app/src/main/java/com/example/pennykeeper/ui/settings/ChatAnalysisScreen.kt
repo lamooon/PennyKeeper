@@ -1,0 +1,117 @@
+package com.example.pennykeeper.ui.settings
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatAnalysisScreen(
+    settingsViewModel: SettingsViewModel,
+    onNavigateBack: () -> Unit
+) {
+    var userInput by remember { mutableStateOf("") }
+    val chatHistory by settingsViewModel.chatHistory.collectAsState()
+    val isLoading by settingsViewModel.isAnalyzing.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Financial Assistant") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Chat history
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    FilledTonalButton(
+                        onClick = { settingsViewModel.analyzeAllData() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading
+                    ) {
+                        Text("Analyze All My Data")
+                    }
+                }
+
+                items(chatHistory) { message ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = if (message.isUser)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            text = message.content,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+
+                if (isLoading) {
+                    item {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                }
+            }
+
+            // Input area
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                tonalElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextField(
+                        value = userInput,
+                        onValueChange = { userInput = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Ask about your finances...") },
+                        enabled = !isLoading
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            settingsViewModel.sendMessage(userInput)
+                            userInput = ""
+                        },
+                        enabled = userInput.isNotBlank() && !isLoading
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Send, "Send")
+                    }
+                }
+            }
+        }
+    }
+}

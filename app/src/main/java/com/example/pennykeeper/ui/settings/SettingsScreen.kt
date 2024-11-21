@@ -21,7 +21,8 @@ fun SettingsScreen(
     onNavigateToBudget: () -> Unit,
     onNavigateToCategories: () -> Unit,
     onNavigateToPrediction: () -> Unit,
-    onNavigateToDisplay: () -> Unit
+    onNavigateToDisplay: () -> Unit,
+    onNavigateToChatAnalysis: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -70,6 +71,15 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Display Mode")
+                }
+            }
+
+            item {
+                FilledTonalButton(
+                    onClick = onNavigateToChatAnalysis,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Financial Assistant")
                 }
             }
         }
