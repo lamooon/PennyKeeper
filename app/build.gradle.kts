@@ -13,7 +13,7 @@ val apiProperties = Properties().apply {
         load(FileInputStream(apiPropertiesFile))
     } else {
         rootProject.file("api.properties").writeText(
-            "HUGGINGFACE_API_KEY=your_api_key_here"
+            "OPENROUTER_API_KEY=your_api_key_here"
         )
         throw GradleException(
             "api.properties not found. Please create api.properties file based on api.properties.template"
@@ -42,12 +42,6 @@ android {
         }
 
         //load the api key
-        buildConfigField(
-            type = "String",
-            name = "HUGGINGFACE_API_KEY",
-            value = "\"${apiProperties.getProperty("HUGGINGFACE_API_KEY") ?: ""}\""
-        )
-
         buildConfigField(
             type = "String",
             name = "OPENROUTER_API_KEY",
