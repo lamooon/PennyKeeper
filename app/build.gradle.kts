@@ -48,6 +48,12 @@ android {
             value = "\"${apiProperties.getProperty("HUGGINGFACE_API_KEY") ?: ""}\""
         )
 
+        buildConfigField(
+            type = "String",
+            name = "OPENROUTER_API_KEY",
+            value = "\"${apiProperties.getProperty("OPENROUTER_API_KEY") ?: ""}\""
+        )
+
     }
 
 

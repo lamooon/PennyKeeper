@@ -3,6 +3,7 @@ package com.example.pennykeeper.ui.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowBack
@@ -33,56 +34,8 @@ fun ChatAnalysisScreen(
                     }
                 }
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Chat history
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item {
-                    FilledTonalButton(
-                        onClick = { settingsViewModel.analyzeAllData() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
-                    ) {
-                        Text("Analyze All My Data")
-                    }
-                }
-
-                items(chatHistory) { message ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = if (message.isUser)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            text = message.content,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-
-                if (isLoading) {
-                    item {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                    }
-                }
-            }
-
-            // Input area
+        },
+        bottomBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 tonalElevation = 2.dp
@@ -109,6 +62,53 @@ fun ChatAnalysisScreen(
                         enabled = userInput.isNotBlank() && !isLoading
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, "Send")
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp)
+        ) {
+            item {
+                FilledTonalButton(
+                    onClick = { settingsViewModel.analyzeAllData() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text("Analyze All My Data")
+                }
+            }
+
+            items(chatHistory) { message ->
+                SelectionContainer {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = if (message.isUser)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            text = message.content,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
             }

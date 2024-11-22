@@ -1,6 +1,5 @@
 package com.example.pennykeeper.ui.settings
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,12 +13,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
-import com.example.pennykeeper.ui.theme.getThemePreference
-import com.example.pennykeeper.ui.theme.saveThemePreference
-import com.example.pennykeeper.utils.ai.FinancialAnalyzer
-import com.example.pennykeeper.utils.ai.HuggingFaceInferenceSvc
-import org.json.JSONArray
-import java.io.IOException
+import com.example.pennykeeper.utils.ai.OpenRouterInferenceSvc
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
@@ -29,7 +23,7 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     //chatbot
-    private val huggingFaceSvc = HuggingFaceInferenceSvc(categoryRepository)
+    private val openRouterInferenceSvc = OpenRouterInferenceSvc(categoryRepository)
 
     data class ChatMessage(
         val content: String,
@@ -122,7 +116,7 @@ class SettingsViewModel(
                 )
 
                 val response = try {
-                    huggingFaceSvc.getResponse("Analyze my spending patterns and provide financial advice.", expenseContext)
+                    openRouterInferenceSvc.getResponse("Analyze my spending patterns and provide financial advice.", expenseContext)
                 } catch (e: Exception) {
                     Log.e("SettingsViewModel", "API Error: ${e.message}")
                     generateBasicAnalysis(expenses)
@@ -142,21 +136,30 @@ class SettingsViewModel(
 
     fun sendMessage(message: String) {
         viewModelScope.launch {
+            if (message.isBlank()) return@launch
+
             _isAnalyzing.value = true
             _chatHistory.value = _chatHistory.value + ChatMessage(message, true)
 
             try {
                 val expenses = expenseRepository.getAllExpenses()
-                val expenseContext = buildExpenseContext(expenses)
+                if (expenses.isEmpty()) {
+                    _chatHistory.value = _chatHistory.value + ChatMessage(
+                        "I notice you don't have any expenses recorded yet. Please add some expenses first so I can help analyze them.",
+                        false
+                    )
+                    return@launch
+                }
 
-                try {
-                    val response = huggingFaceSvc.getResponse(message, expenseContext)
-                    _chatHistory.value = _chatHistory.value + ChatMessage(response, false)
+                val expenseContext = buildExpenseContext(expenses)
+                val response = try {
+                    openRouterInferenceSvc.getResponse(message, expenseContext)
                 } catch (e: Exception) {
                     Log.e("ChatBot", "Error calling API: ${e.message}")
-                    val fallbackResponse = generateBasicAnalysis(expenses)
-                    _chatHistory.value = _chatHistory.value + ChatMessage(fallbackResponse, false)
+                    generateBasicAnalysis(expenses)
                 }
+
+                _chatHistory.value = _chatHistory.value + ChatMessage(response, false)
             } catch (e: Exception) {
                 _chatHistory.value = _chatHistory.value + ChatMessage(
                     "Sorry, I couldn't process your request. Please try again.",
@@ -169,8 +172,15 @@ class SettingsViewModel(
     }
 
     private fun buildExpenseContext(expenses: List<ExpenseUiModel>): String {
-        return expenses.joinToString("\n") { expense ->
-            "$${expense.amount} for ${expense.place} (${expense.categoryName})"
+        if (expenses.isEmpty()) return ""
+
+        val total = expenses.sumOf { it.amount }
+        return buildString {
+            appendLine("Here are your recent expenses:")
+            expenses.forEach { expense ->
+                appendLine("- $${expense.amount} spent at ${expense.place} (${expense.categoryName}) on ${expense.date}")
+            }
+            appendLine("\nTotal spending: $${String.format("%.2f", total)}")
         }
     }
 
@@ -192,6 +202,14 @@ class SettingsViewModel(
                 appendLine("Amount: $${String.format("%.2f", categoryTotal)} ($percentage%)")
                 appendLine("\nSuggestion: Consider setting a budget limit for ${highestCategory.key} to reduce expenses.")
             }
+        }
+    }
+
+    //for debugging purpose
+    private fun logResponse(response: String) {
+        // Breaking down the response into chunks to avoid Log truncation
+        response.chunked(1000).forEachIndexed { index, chunk ->
+            Log.d("ChatResponse", "Part $index: $chunk")
         }
     }
 }
