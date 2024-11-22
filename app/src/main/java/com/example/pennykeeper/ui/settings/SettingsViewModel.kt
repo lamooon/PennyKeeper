@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
-import com.example.pennykeeper.utils.ai.OpenRouterInferenceSvc
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
@@ -22,9 +21,7 @@ class SettingsViewModel(
     private val themeRepository: ThemeRepository
 ) : ViewModel() {
 
-    //chatbot
-    private val openRouterInferenceSvc = OpenRouterInferenceSvc(categoryRepository)
-
+    //chatbot related variables
     data class ChatMessage(
         val content: String,
         val isUser: Boolean
@@ -36,6 +33,7 @@ class SettingsViewModel(
     private val _isAnalyzing = MutableStateFlow(false)
     val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
 
+    //trend analysis
     private val _monthlyExpenseTrend = MutableStateFlow<List<Pair<String, Double>>>(emptyList())
     val monthlyExpenseTrend: StateFlow<List<Pair<String, Double>>> = _monthlyExpenseTrend.asStateFlow()
 
@@ -103,72 +101,16 @@ class SettingsViewModel(
         _predictedExpense.value = prediction
     }
 
+    /**
+     * Tutorial related function starts here
+     */
+
     fun analyzeAllData() {
-        viewModelScope.launch {
-            _isAnalyzing.value = true
 
-            try {
-                val expenses = expenseRepository.getAllExpenses()
-                val expenseContext = buildExpenseContext(expenses)
-
-                _chatHistory.value = _chatHistory.value + ChatMessage(
-                    "Analyze my spending patterns", true
-                )
-
-                val response = try {
-                    openRouterInferenceSvc.getResponse("Analyze my spending patterns and provide financial advice.", expenseContext)
-                } catch (e: Exception) {
-                    Log.e("SettingsViewModel", "API Error: ${e.message}")
-                    generateBasicAnalysis(expenses)
-                }
-
-                _chatHistory.value = _chatHistory.value + ChatMessage(response, false)
-            } catch (e: Exception) {
-                _chatHistory.value = _chatHistory.value + ChatMessage(
-                    "Sorry, there was an error analyzing your expenses. Please try again.",
-                    false
-                )
-            } finally {
-                _isAnalyzing.value = false
-            }
-        }
     }
 
     fun sendMessage(message: String) {
-        viewModelScope.launch {
-            if (message.isBlank()) return@launch
 
-            _isAnalyzing.value = true
-            _chatHistory.value = _chatHistory.value + ChatMessage(message, true)
-
-            try {
-                val expenses = expenseRepository.getAllExpenses()
-                if (expenses.isEmpty()) {
-                    _chatHistory.value = _chatHistory.value + ChatMessage(
-                        "I notice you don't have any expenses recorded yet. Please add some expenses first so I can help analyze them.",
-                        false
-                    )
-                    return@launch
-                }
-
-                val expenseContext = buildExpenseContext(expenses)
-                val response = try {
-                    openRouterInferenceSvc.getResponse(message, expenseContext)
-                } catch (e: Exception) {
-                    Log.e("ChatBot", "Error calling API: ${e.message}")
-                    generateBasicAnalysis(expenses)
-                }
-
-                _chatHistory.value = _chatHistory.value + ChatMessage(response, false)
-            } catch (e: Exception) {
-                _chatHistory.value = _chatHistory.value + ChatMessage(
-                    "Sorry, I couldn't process your request. Please try again.",
-                    false
-                )
-            } finally {
-                _isAnalyzing.value = false
-            }
-        }
     }
 
     private fun buildExpenseContext(expenses: List<ExpenseUiModel>): String {

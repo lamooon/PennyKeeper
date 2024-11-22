@@ -7,19 +7,6 @@ plugins {
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
 }
 
-val apiProperties = Properties().apply {
-    val apiPropertiesFile = rootProject.file("api.properties")
-    if (apiPropertiesFile.exists()) {
-        load(FileInputStream(apiPropertiesFile))
-    } else {
-        rootProject.file("api.properties").writeText(
-            "OPENROUTER_API_KEY=your_api_key_here"
-        )
-        throw GradleException(
-            "api.properties not found. Please create api.properties file based on api.properties.template"
-        )
-    }
-}
 
 
 android {
@@ -40,13 +27,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        //load the api key
-        buildConfigField(
-            type = "String",
-            name = "OPENROUTER_API_KEY",
-            value = "\"${apiProperties.getProperty("OPENROUTER_API_KEY") ?: ""}\""
-        )
 
     }
 
@@ -92,10 +72,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
-
-    //HTTP client for Chatbot
-    implementation(libs.okhttp)
-
 
     val nav_version = "2.8.3"
     implementation("androidx.navigation:navigation-compose:$nav_version")
