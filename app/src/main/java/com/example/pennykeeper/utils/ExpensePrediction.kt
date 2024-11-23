@@ -15,10 +15,8 @@ class ExpensePrediction {
     fun predictNextMonthExpense(expenses: List<Pair<Int, Double>>): Double {
         if (expenses.size < 2) return 0.0
 
-        // Get just the values
         val values = expenses.map { it.second }
 
-        // Simple Exponential Smoothing
         val alpha = 0.7
 
         // Initialize with first value
@@ -29,7 +27,7 @@ class ExpensePrediction {
             forecast = alpha * values[i] + (1 - alpha) * forecast
         }
 
-        // Final prediction
+        // return prediction
         return forecast
     }
 }

@@ -132,11 +132,11 @@ fun HomeScreen(
                 // Clean up the text to get place
                 var place = text
                     // Remove common action words
-                    .replace(Regex("""^(add|spent|used|paid|spence)\s+""", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("""^(add|spent|used|paid|spence|spend|use)\s+""", RegexOption.IGNORE_CASE), "")
                     // Remove amount with possible dollar sign
                     .replace(Regex("""\$?\s*\d+(?:\.\d{1,2})?"""), "")
                     // Remove common prepositions
-                    .replace(Regex("""\s+(on|at|in)\s+""", RegexOption.IGNORE_CASE), " ")
+                    .replace(Regex("""\s+(on|at|in|over)\s+""", RegexOption.IGNORE_CASE), " ")
                     // Remove date references
                     .replace(Regex("""\s+(yesterday|today|tomorrow)""", RegexOption.IGNORE_CASE), "")
                     // Remove "on the Xth" date format
