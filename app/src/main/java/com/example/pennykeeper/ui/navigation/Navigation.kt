@@ -47,7 +47,13 @@ import com.example.pennykeeper.ui.stats.StatisticsViewModel
 
 
 @Composable
-fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: SettingsRepository, categoryRepository: CategoryRepository, themeRepository: ThemeRepository) {
+fun Navigation(
+    expenseRepository: ExpenseRepository,
+    settingsRepository: SettingsRepository,
+    categoryRepository: CategoryRepository,
+    themeRepository: ThemeRepository,
+    settingsViewModel: SettingsViewModel
+) {
     val navController = rememberNavController()
     val factory = AppViewModelFactory(expenseRepository,settingsRepository, categoryRepository, themeRepository )
 

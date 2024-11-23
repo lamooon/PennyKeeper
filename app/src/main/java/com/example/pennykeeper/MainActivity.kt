@@ -9,18 +9,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModelProvider
 import com.example.pennykeeper.data.database.ExpenseDatabase
 import com.example.pennykeeper.data.database.SettingsDatabase
 import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.data.repository.SettingsRepository
 import com.example.pennykeeper.data.repository.ThemeRepository
-
+import com.example.pennykeeper.ui.settings.SettingsViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Initialize databases and repositories
         val database = ExpenseDatabase.getDatabase(applicationContext)
         val settingDatabase = SettingsDatabase.getDatabase(applicationContext)
 
@@ -32,8 +34,20 @@ class MainActivity : ComponentActivity() {
         val categoryRepository = CategoryRepository(database.categoryDao())
         val themeRepository = ThemeRepository(applicationContext)
 
+        // Create AppViewModelFactory with required dependencies
+        val viewModelFactory = AppViewModelFactory(
+            expenseRepository = expenseRepository,
+            settingsRepository = settingsRepository,
+            categoryRepository = categoryRepository,
+            themeRepository = themeRepository
+        )
+
+        // Use the factory to initialize SettingsViewModel
+        val settingsViewModel = ViewModelProvider(this, viewModelFactory)[SettingsViewModel::class.java]
+
         setContent {
-            val isDarkMode = themeRepository.isDarkMode.collectAsState().value
+            // Observe the dark mode state
+            val isDarkMode = settingsViewModel.isDarkMode.collectAsState().value
 
             MaterialTheme(
                 colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
@@ -42,7 +56,8 @@ class MainActivity : ComponentActivity() {
                     expenseRepository = expenseRepository,
                     settingsRepository = settingsRepository,
                     categoryRepository = categoryRepository,
-                    themeRepository = themeRepository
+                    themeRepository = themeRepository,
+                    settingsViewModel = settingsViewModel // Pass the ViewModel to PennyKeeper
                 )
             }
         }

@@ -19,3 +19,4 @@ fun getThemePreference(context: Context): Boolean {
     val sharedPreferences: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     return sharedPreferences.getBoolean(PREF_DARK_MODE, false)
 }
+

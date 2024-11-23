@@ -30,6 +30,9 @@ class SettingsViewModel(
         val isUser: Boolean
     )
 
+    // to implement darkmode
+    val isDarkMode: StateFlow<Boolean> = themeRepository.isDarkMode
+
     private val _chatHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatHistory: StateFlow<List<ChatMessage>> = _chatHistory.asStateFlow()
 
@@ -49,12 +52,9 @@ class SettingsViewModel(
         }
     }
 
-    val isDarkMode = themeRepository.isDarkMode
-
-    fun toggleTheme(isDark: Boolean) {
-        viewModelScope.launch {
-            themeRepository.toggleDarkMode()
-        }
+    // Toggle the theme via ThemeRepository
+    fun toggleTheme() {
+        themeRepository.toggleDarkMode()
     }
 
     val budget: StateFlow<Double> = settingsRepository.getCurrentBudget()

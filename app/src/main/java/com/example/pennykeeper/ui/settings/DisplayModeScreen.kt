@@ -20,55 +20,41 @@ fun DisplayModeScreen(
     // Observe the current dark mode state from the ViewModel
     val isDarkMode by settingsViewModel.isDarkMode.collectAsState()
 
-    // Set MaterialTheme based on the dark mode state
-    MaterialTheme(
-        colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Display Mode") },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Display Mode") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                )
-            }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text("Select Display Mode", style = MaterialTheme.typography.titleLarge)
+                },
+                scrollBehavior = null // No scroll behavior, use null explicitly
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Dark Mode", style = MaterialTheme.typography.titleLarge)
 
-                // Light Mode Option
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = !isDarkMode,
-                        onClick = {
-                            settingsViewModel.toggleTheme(false) // Switch to Light Mode
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Light Mode")
-                }
+            // Switch for toggling dark mode
+            Switch(
+                checked = isDarkMode,
+                onCheckedChange = { settingsViewModel.toggleTheme() },
+                modifier = Modifier.padding(top = 16.dp)
+            )
 
-                // Dark Mode Option
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = isDarkMode,
-                        onClick = {
-                            settingsViewModel.toggleTheme(true) // Switch to Dark Mode
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Dark Mode")
-                }
-            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = if (isDarkMode) "Dark Mode Enabled" else "Light Mode Enabled",
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }
