@@ -306,6 +306,10 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
         return hasFinancialData && containsAnalysisKeyword
     }
 
+    /**
+     * Handles typo using levenshtein distance -
+     * adapted code from https://gist.github.com/ademar111190/34d3de41308389a0d0d8
+     */
     private fun levenshteinDistance(s1: String, s2: String): Int {
         val costs = IntArray(s2.length + 1) { it }
         var lastValue = 0
