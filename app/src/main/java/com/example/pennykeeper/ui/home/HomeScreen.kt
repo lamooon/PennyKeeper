@@ -15,18 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.pennykeeper.data.model.ExpenseUiModel
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
 import java.util.Locale
-import android.app.Activity
-import android.speech.RecognizerIntent
-import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Face
-import com.example.pennykeeper.util.SpeechRecognitionHelper
 
 
 @Composable
@@ -60,9 +51,6 @@ fun HomeScreen(
             }
         )
     }
-
-
-
 
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
@@ -230,6 +218,4 @@ private fun ExpenseCard(
             }
         }
     }
-
-
 }
