@@ -72,7 +72,7 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
         }
 
         val jsonBody = JSONObject().apply {
-            put("model", "anthropic/claude-2")
+            put("model", "meta-llama/llama-3.2-1b-instruct:free")
             put("messages", JSONArray().apply {
                 put(JSONObject().apply {
                     put("role", "system")
@@ -106,14 +106,38 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string() ?: throw IOException("Empty response")
 
+        // Add debug logging
+        println("Raw API Response: $responseBody")
+        println("Response Status Code: ${response.code}")
+        println("Response Headers: ${response.headers}")
+
         return try {
             val jsonResponse = JSONObject(responseBody)
-            val content = jsonResponse
-                .getJSONArray("choices")
-                .getJSONObject(0)
-                .getJSONObject("message")
-                .getString("content")
-                .trim()
+
+            // Debug log the available keys in the response
+            println("Response JSON keys: ${JSONObject(responseBody).keys().asSequence().toList()}")
+
+            val content = when {
+                jsonResponse.has("candidates") -> {
+                    jsonResponse
+                        .getJSONArray("candidates")
+                        .getJSONObject(0)
+                        .getString("content")
+                        .trim()
+                }
+                jsonResponse.has("choices") -> {
+                    jsonResponse
+                        .getJSONArray("choices")
+                        .getJSONObject(0)
+                        .getJSONObject("message")
+                        .getString("content")
+                        .trim()
+                }
+                else -> {
+                    println("Neither 'candidates' nor 'choices' found in response")
+                    throw IOException("Unexpected response format")
+                }
+            }
 
             if (content.isBlank()) {
                 throw IOException("Empty response content")
@@ -126,7 +150,7 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
                 formatAnalysisResponse(content, expenses)
             }
         } catch (e: Exception) {
-            throw IOException("Failed to parse response: ${e.message}")
+            throw IOException("Failed to parse response: ${e.message}\nResponse body: $responseBody")
         }
     }
 
@@ -179,6 +203,8 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
             val lines = context.lowercase()
                 .lines()
                 .filter { it.isNotEmpty() }
+                // Ignore summary lines
+                .filter { !it.contains("total spending") && !it.contains("average") }
 
             lines.forEach { line ->
                 try {
@@ -227,7 +253,7 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
             appendLine("📊 Basic Analysis")
             appendLine("────────────────")
             appendLine("• Total spending: ${currencyFormatter.format(total)}")
-            appendLine("• Number of transactions: ${expenses.size}")
+            appendLine("• Number of categories: ${expenses.size}")
             if (expenses.isNotEmpty()) {
                 val avgSpending = total / expenses.size
                 appendLine("• Average transaction: ${currencyFormatter.format(avgSpending)}")

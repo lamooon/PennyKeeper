@@ -136,7 +136,7 @@ fun HomeScreen(
                     // Remove amount with possible dollar sign
                     .replace(Regex("""\$?\s*\d+(?:\.\d{1,2})?"""), "")
                     // Remove common prepositions
-                    .replace(Regex("""\s+(on|at|in|over)\s+""", RegexOption.IGNORE_CASE), " ")
+                    .replace(Regex("""\s+(on|at|in|over|for)\s+""", RegexOption.IGNORE_CASE), " ")
                     // Remove date references
                     .replace(Regex("""\s+(yesterday|today|tomorrow)""", RegexOption.IGNORE_CASE), "")
                     // Remove "on the Xth" date format
