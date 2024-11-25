@@ -1,4 +1,4 @@
-package com.example.pennykeeper.ui.expense
+package com.example.pennykeeper.ui.editExpense
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

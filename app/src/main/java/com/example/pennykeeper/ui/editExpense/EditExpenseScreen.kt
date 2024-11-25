@@ -1,4 +1,4 @@
-package com.example.pennykeeper.ui.expense
+package com.example.pennykeeper.ui.editExpense
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

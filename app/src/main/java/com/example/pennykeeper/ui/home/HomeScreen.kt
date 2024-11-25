@@ -64,42 +64,9 @@ fun HomeScreen(
     }
 
 
-    // Compute the spent amount for today
-    val spentAmount = remember(expenses) {
-        val today = Calendar.getInstance()
-        expenses.filter { expense ->
-            val expenseDate = Calendar.getInstance().apply { time = expense.date }
-            expenseDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                    expenseDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
-        }.sumOf { it.amount }
-    }
+
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-
-    // Determine message based on spending ratio
-    val message = when {
-        dailyLimit == 0.0 -> ""
-        spentAmount / dailyLimit > 1.0 -> "🚨 You've exceeded your budget! 🐷💸"
-        spentAmount / dailyLimit > 0.8 -> "⚠️ You're at ${"%.1f".format((spentAmount / dailyLimit) * 100)}%! 🐷"
-        spentAmount / dailyLimit > 0.5 -> "😊 Keep an eye on spending: ${"%.1f".format((spentAmount / dailyLimit) * 100)}%."
-        spentAmount / dailyLimit > 0.3 -> "👍 Doing well! ${"%.1f".format((spentAmount / dailyLimit) * 100)}% used. 🌟"
-        spentAmount / dailyLimit > 0.1 -> "✨ Great start! ${"%.1f".format((spentAmount / dailyLimit) * 100)}% spent. 🌈"
-        else -> ""
-    }
-
-    // Show the appropriate snackbar message
-    LaunchedEffect(spentAmount, dailyLimit) {
-        if (message.isNotEmpty()) {
-            coroutineScope.launch {
-                snackbarHostState.showSnackbar(
-                    message = message,
-                    duration = SnackbarDuration.Long
-                )
-            }
-        }
-    }
-
     Scaffold(
         floatingActionButton = {
             Row(
@@ -131,13 +98,6 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(bottom = 80.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(0.33f)
-                            .fillMaxWidth()
-                    ) {
-                        HabitTrackerSection(dailyLimit = dailyLimit, spentAmount = spentAmount)
-                    }
 
                     // SnackbarHost with centered text
                     SnackbarHost(
@@ -204,62 +164,6 @@ fun HomeScreen(
             }
         }
     )
-}
-
-@SuppressLint("DefaultLocale")
-@Composable
-private fun HabitTrackerSection(
-    dailyLimit: Double,
-    spentAmount: Double
-) {
-    val remainingBudget = dailyLimit - spentAmount
-    val progress = if (dailyLimit > 0) {
-        (spentAmount / dailyLimit).coerceIn(0.0, 1.0)
-    } else {
-        0f
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        // Daily Limit Text
-        Text(
-            text = "Daily Limit: $${String.format("%.2f", dailyLimit)}",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // Progress Bar
-        Spacer(modifier = Modifier.height(8.dp))
-        LinearProgressIndicator(
-            progress = { progress.toFloat() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-        )
-
-        // Spent and Remaining Text
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Spent: $${String.format("%.2f", spentAmount)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "Remaining: $${String.format("%.2f", remainingBudget)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
 }
 
 @SuppressLint("DefaultLocale")

@@ -2,7 +2,6 @@ package com.example.pennykeeper.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -29,21 +28,14 @@ import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.data.repository.SettingsRepository
 import com.example.pennykeeper.data.repository.ThemeRepository
-import com.example.pennykeeper.ui.expense.EditExpenseScreen
-import com.example.pennykeeper.ui.expense.EditExpenseViewModel
+import com.example.pennykeeper.ui.editExpense.EditExpenseScreen
+import com.example.pennykeeper.ui.editExpense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.AddScreen
 import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
-import com.example.pennykeeper.ui.settings.CategoryViewModel
 import com.example.pennykeeper.ui.settings.ChatAnalysisScreen
-import com.example.pennykeeper.ui.settings.DisplayModeScreen
-import com.example.pennykeeper.ui.settings.ManageCategoriesScreen
-import com.example.pennykeeper.ui.settings.PredictionScreen
-import com.example.pennykeeper.ui.settings.SetBudgetScreen
 import com.example.pennykeeper.ui.settings.SettingsScreen
 import com.example.pennykeeper.ui.settings.SettingsViewModel
-import com.example.pennykeeper.ui.stats.StatisticsScreen
-import com.example.pennykeeper.ui.stats.StatisticsViewModel
 
 
 @Composable
@@ -97,58 +89,23 @@ fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: Setting
                 )
             }
 
-            composable(NavigationDestination.Statistics.route) {
-                val statisticsViewModel = viewModel<StatisticsViewModel>(factory = factory)
-                StatisticsScreen(statisticsViewModel)
-            }
+
 
             composable(NavigationDestination.Settings.route) {
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
                 SettingsScreen(
                     settingsViewModel = settingsViewModel,
-                    onNavigateToBudget = { navController.navigate(NavigationDestination.SetBudget.route) },
-                    onNavigateToCategories = { navController.navigate(NavigationDestination.ManageCategories.route) },
-                    onNavigateToPrediction = { navController.navigate(NavigationDestination.ExpensePrediction.route) },
-                    onNavigateToDisplay = { navController.navigate(NavigationDestination.DisplayMode.route) },
                     onNavigateToChatAnalysis = { navController.navigate(NavigationDestination.ChatAnalysis.route) }
                 )
             }
 
-            composable(NavigationDestination.SetBudget.route) {
-                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
-                SetBudgetScreen(
-                    settingsViewModel = settingsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
 
-            composable(NavigationDestination.ManageCategories.route) {
-                val categoryViewModel = viewModel<CategoryViewModel>(factory = factory)
-                ManageCategoriesScreen(
-                    viewModel = categoryViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
 
-            composable(NavigationDestination.ExpensePrediction.route) {
-                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
-                PredictionScreen(
-                    settingsViewModel = settingsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+
 
             composable(NavigationDestination.ChatAnalysis.route) {
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
                 ChatAnalysisScreen(
-                    settingsViewModel = settingsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-
-            composable(NavigationDestination.DisplayMode.route) {
-                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
-                DisplayModeScreen(
                     settingsViewModel = settingsViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -165,11 +122,6 @@ private fun BottomNavigationBar(navController: NavController) {
             route = NavigationDestination.Home.route,
             title = "Home",
             icon = Icons.Default.Home
-        ),
-        BottomNavItem(
-            route = NavigationDestination.Statistics.route,
-            title = "Statistics",
-            icon = Icons.AutoMirrored.Filled.List
         ),
         BottomNavItem(
             route = NavigationDestination.Settings.route,

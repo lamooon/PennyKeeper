@@ -15,104 +15,41 @@ import java.util.Calendar
 import java.util.Locale
 
 class SettingsViewModel(
-    private val settingsRepository: SettingsRepository,
-    private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository,
-    private val themeRepository: ThemeRepository
 ) : ViewModel() {
 
-    //chatbot related variables
+    /*
+        Manages chat messages between users and AI
+     */
     data class ChatMessage(
         val content: String,
         val isUser: Boolean
     )
 
+    /*
+        Manages reactive updates using StateFlow
+     */
     private val _chatHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatHistory: StateFlow<List<ChatMessage>> = _chatHistory.asStateFlow()
 
     private val _isAnalyzing = MutableStateFlow(false)
     val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
 
-    //trend analysis
-    private val _monthlyExpenseTrend = MutableStateFlow<List<Pair<String, Double>>>(emptyList())
-    val monthlyExpenseTrend: StateFlow<List<Pair<String, Double>>> = _monthlyExpenseTrend.asStateFlow()
-
-    //prediction service
-    private val _predictedExpense = MutableStateFlow<Double>(0.0)
-    val predictedExpense: StateFlow<Double> = _predictedExpense.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            calculatePrediction()
-        }
-    }
-
-    val isDarkMode = themeRepository.isDarkMode
-
-    fun toggleTheme(isDark: Boolean) {
-        viewModelScope.launch {
-            themeRepository.toggleDarkMode()
-        }
-    }
-
-    val budget: StateFlow<Double> = settingsRepository.getCurrentBudget()
-        .map { it.dailyBudget }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 0.0
-        )
-
-    private val _isBudgetSaved = MutableStateFlow(false)
-    val isBudgetSaved: StateFlow<Boolean> = _isBudgetSaved.asStateFlow()
-
-    fun saveBudget(budget: Double) {
-        viewModelScope.launch {
-            settingsRepository.saveBudget(budget)
-            _isBudgetSaved.value = true
-            kotlinx.coroutines.delay(2000)
-            _isBudgetSaved.value = false
-        }
-    }
-
-    private suspend fun calculatePrediction() {
-        val expenses = expenseRepository.getAllExpenses()
-
-        val monthlyExpenses = expenses
-            .groupBy { expense ->
-                val calendar = Calendar.getInstance()
-                calendar.timeInMillis = expense.date.time
-                calendar.get(Calendar.YEAR) * 12 + calendar.get(Calendar.MONTH)
-            }
-            .mapValues { it.value.sumOf { expense -> expense.amount } }
-            .toList()
-            .sortedBy { it.first }
-            .mapIndexed { index, pair -> index to pair.second }
-
-        val last6Months = monthlyExpenses.takeLast(6)
-        _monthlyExpenseTrend.value = last6Months.map { (monthIndex, amount) ->
-            val calendar = Calendar.getInstance()
-            calendar.add(Calendar.MONTH, monthIndex - monthlyExpenses.size + 1)
-            val monthYear = "${calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())} ${calendar.get(Calendar.YEAR)}"
-            monthYear to amount
-        }
-
-        val prediction = ExpensePrediction().predictNextMonthExpense(monthlyExpenses)
-        _predictedExpense.value = prediction
-    }
-
-    /**
-     * Tutorial related function starts here
-     */
-
     fun analyzeAllData() {
-
+        /*
+        TODO: You will implement this for the tutorial
+         */
     }
 
     fun sendMessage(message: String) {
+        /*
+        TODO: You will implement this for the tutorial
+         */
 
     }
 
+    /*
+        parses all the Room DB for AI to understand the spending patterns
+     */
     private fun buildExpenseContext(expenses: List<ExpenseUiModel>): String {
         if (expenses.isEmpty()) return ""
 
@@ -144,14 +81,6 @@ class SettingsViewModel(
                 appendLine("Amount: $${String.format("%.2f", categoryTotal)} ($percentage%)")
                 appendLine("\nSuggestion: Consider setting a budget limit for ${highestCategory.key} to reduce expenses.")
             }
-        }
-    }
-
-    //for debugging purpose
-    private fun logResponse(response: String) {
-        // Breaking down the response into chunks to avoid Log truncation
-        response.chunked(1000).forEachIndexed { index, chunk ->
-            Log.d("ChatResponse", "Part $index: $chunk")
         }
     }
 }

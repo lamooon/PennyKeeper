@@ -18,10 +18,6 @@ fun formatCurrency(amount: Double): String {
 @Composable
 fun SettingsScreen(
     settingsViewModel: SettingsViewModel,
-    onNavigateToBudget: () -> Unit,
-    onNavigateToCategories: () -> Unit,
-    onNavigateToPrediction: () -> Unit,
-    onNavigateToDisplay: () -> Unit,
     onNavigateToChatAnalysis: () -> Unit
 ) {
     Scaffold(
@@ -38,42 +34,6 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                FilledTonalButton(
-                    onClick = onNavigateToBudget,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Set Budget")
-                }
-            }
-
-            item {
-                FilledTonalButton(
-                    onClick = onNavigateToCategories,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Manage Categories")
-                }
-            }
-
-            item {
-                FilledTonalButton(
-                    onClick = onNavigateToPrediction,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Expense Prediction")
-                }
-            }
-
-            item {
-                FilledTonalButton(
-                    onClick = onNavigateToDisplay,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Display Mode")
-                }
-            }
-
             item {
                 FilledTonalButton(
                     onClick = onNavigateToChatAnalysis,
