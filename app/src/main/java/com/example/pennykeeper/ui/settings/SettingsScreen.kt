@@ -6,18 +6,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import java.text.NumberFormat
-import java.util.*
 
-fun formatCurrency(amount: Double): String {
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
-    return currencyFormatter.format(amount)
-}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    settingsViewModel: SettingsViewModel,
     onNavigateToChatAnalysis: () -> Unit
 ) {
     Scaffold(

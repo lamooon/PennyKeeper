@@ -6,8 +6,7 @@ import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.ui.editExpense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.HomeViewModel
-import com.example.pennykeeper.ui.settings.CategoryViewModel
-import com.example.pennykeeper.ui.settings.SettingsViewModel
+import com.example.pennykeeper.ui.settings.chatbot.ChatBotViewModel
 
 class AppViewModelFactory(
     private val expenseRepository: ExpenseRepository,
@@ -21,16 +20,13 @@ class AppViewModelFactory(
                 HomeViewModel(expenseRepository, categoryRepository) as T
             }
 
-            modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
-                SettingsViewModel() as T
+            modelClass.isAssignableFrom(ChatBotViewModel::class.java) -> {
+                ChatBotViewModel() as T
             }
 
             modelClass.isAssignableFrom(EditExpenseViewModel::class.java) -> {
                 EditExpenseViewModel(expenseRepository, categoryRepository) as T
             }
-
-            modelClass.isAssignableFrom(CategoryViewModel::class.java) ->
-                CategoryViewModel(categoryRepository) as T
 
             else -> throw IllegalArgumentException("ViewModel not found: ${modelClass.name}")
         }

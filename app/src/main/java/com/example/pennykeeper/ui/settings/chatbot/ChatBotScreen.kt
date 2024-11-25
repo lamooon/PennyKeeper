@@ -1,4 +1,4 @@
-package com.example.pennykeeper.ui.settings
+package com.example.pennykeeper.ui.settings.chatbot
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,7 +7,6 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,7 +16,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatAnalysisScreen(
-    settingsViewModel: SettingsViewModel,
+    settingsViewModel: ChatBotViewModel,
     onNavigateBack: () -> Unit
 ) {
     var userInput by remember { mutableStateOf("") }
@@ -74,15 +73,6 @@ fun ChatAnalysisScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(16.dp)
         ) {
-            item {
-                FilledTonalButton(
-                    onClick = { settingsViewModel.analyzeAllData() },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
-                ) {
-                    Text("Analyze All My Data")
-                }
-            }
 
             items(chatHistory) { message ->
                 SelectionContainer {

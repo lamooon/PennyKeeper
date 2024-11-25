@@ -31,9 +31,9 @@ import com.example.pennykeeper.ui.editExpense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.AddScreen
 import com.example.pennykeeper.ui.home.HomeScreen
 import com.example.pennykeeper.ui.home.HomeViewModel
-import com.example.pennykeeper.ui.settings.ChatAnalysisScreen
+import com.example.pennykeeper.ui.settings.chatbot.ChatAnalysisScreen
 import com.example.pennykeeper.ui.settings.SettingsScreen
-import com.example.pennykeeper.ui.settings.SettingsViewModel
+import com.example.pennykeeper.ui.settings.chatbot.ChatBotViewModel
 
 
 @Composable
@@ -87,12 +87,8 @@ fun Navigation(expenseRepository: ExpenseRepository, categoryRepository: Categor
                 )
             }
 
-
-
             composable(NavigationDestination.Settings.route) {
-                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
                 SettingsScreen(
-                    settingsViewModel = settingsViewModel,
                     onNavigateToChatAnalysis = { navController.navigate(NavigationDestination.ChatAnalysis.route) }
                 )
             }
@@ -102,7 +98,7 @@ fun Navigation(expenseRepository: ExpenseRepository, categoryRepository: Categor
 
 
             composable(NavigationDestination.ChatAnalysis.route) {
-                val settingsViewModel = viewModel<SettingsViewModel>(factory = factory)
+                val settingsViewModel = viewModel<ChatBotViewModel>(factory = factory)
                 ChatAnalysisScreen(
                     settingsViewModel = settingsViewModel,
                     onNavigateBack = { navController.popBackStack() }
