@@ -26,8 +26,6 @@ import androidx.navigation.navArgument
 import com.example.pennykeeper.AppViewModelFactory
 import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
-import com.example.pennykeeper.data.repository.SettingsRepository
-import com.example.pennykeeper.data.repository.ThemeRepository
 import com.example.pennykeeper.ui.editExpense.EditExpenseScreen
 import com.example.pennykeeper.ui.editExpense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.AddScreen
@@ -39,9 +37,9 @@ import com.example.pennykeeper.ui.settings.SettingsViewModel
 
 
 @Composable
-fun Navigation(expenseRepository: ExpenseRepository, settingsRepository: SettingsRepository, categoryRepository: CategoryRepository, themeRepository: ThemeRepository) {
+fun Navigation(expenseRepository: ExpenseRepository, categoryRepository: CategoryRepository) {
     val navController = rememberNavController()
-    val factory = AppViewModelFactory(expenseRepository,settingsRepository, categoryRepository, themeRepository )
+    val factory = AppViewModelFactory(expenseRepository, categoryRepository)
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }

@@ -1,14 +1,8 @@
 package com.example.pennykeeper.ui.settings
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pennykeeper.data.model.ExpenseUiModel
-import com.example.pennykeeper.data.repository.CategoryRepository
-import com.example.pennykeeper.data.repository.ExpenseRepository
-import com.example.pennykeeper.data.repository.SettingsRepository
-import com.example.pennykeeper.data.repository.ThemeRepository
-import com.example.pennykeeper.utils.ExpensePrediction
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar

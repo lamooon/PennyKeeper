@@ -36,8 +36,6 @@ fun HomeScreen(
     onNavigateToAdd: () -> Unit,
 ) {
     val expenses by homeViewModel.expenses.collectAsState()
-    val dailyLimit by homeViewModel.dailyBudgetFlow.collectAsState(initial = 0.0)
-
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     if (showDeleteConfirmation) {

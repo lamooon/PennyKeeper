@@ -6,7 +6,6 @@ import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.model.RecurringPeriod
 import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
-import com.example.pennykeeper.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -15,11 +14,7 @@ import java.util.Date
 class HomeViewModel(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
-    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
-
-    // Fetch daily budget directly as a flow
-    val dailyBudgetFlow = settingsRepository.getDailyBudgetFlow()
 
     val expenses = expenseRepository.expenses
         .map { it.sortedByDescending { expense -> expense.date } }
