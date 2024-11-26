@@ -7,13 +7,24 @@ plugins {
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
 }
 
+val apiProperties = Properties().apply {
+    val apiPropertiesFile = rootProject.file("api.properties")
+    if (apiPropertiesFile.exists()) {
+        load(FileInputStream(apiPropertiesFile))
+    } else {
+        rootProject.file("api.properties").writeText(
+            "OPENROUTER_API_KEY=your_api_key_here"
+        )
+        throw GradleException(
+            "api.properties not found. Please create api.properties file based on api.properties.template"
+        )
+    }
+}
 
 
 android {
     namespace = "com.example.pennykeeper"
     compileSdk = 34
-
-
 
     defaultConfig {
 
@@ -59,6 +70,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
 }
 
 dependencies {
@@ -91,4 +103,8 @@ dependencies {
     implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
     ksp("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
     implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
+
+    //http
+    implementation(libs.okhttp)
+
 }
