@@ -6,11 +6,13 @@ import com.example.pennykeeper.data.repository.CategoryRepository
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import com.example.pennykeeper.ui.editExpense.EditExpenseViewModel
 import com.example.pennykeeper.ui.home.HomeViewModel
+import com.example.pennykeeper.ui.settings.chatbot.AIService
 import com.example.pennykeeper.ui.settings.chatbot.ChatBotViewModel
 
 class AppViewModelFactory(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
+    private val aiService: AIService = AIService()
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -21,7 +23,7 @@ class AppViewModelFactory(
             }
 
             modelClass.isAssignableFrom(ChatBotViewModel::class.java) -> {
-                ChatBotViewModel() as T
+                ChatBotViewModel(aiService, expenseRepository, categoryRepository) as T
             }
 
             modelClass.isAssignableFrom(EditExpenseViewModel::class.java) -> {

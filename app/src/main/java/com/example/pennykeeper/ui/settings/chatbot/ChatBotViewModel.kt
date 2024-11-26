@@ -1,9 +1,14 @@
 package com.example.pennykeeper.ui.settings.chatbot
 
 import androidx.lifecycle.ViewModel
+import com.example.pennykeeper.data.repository.CategoryRepository
+import com.example.pennykeeper.data.repository.ExpenseRepository
 import kotlinx.coroutines.flow.*
 
 class ChatBotViewModel(
+    private val aiService: AIService,
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     /*
@@ -23,16 +28,9 @@ class ChatBotViewModel(
     private val _isAnalyzing = MutableStateFlow(false)
     val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
 
-    fun analyzeAllData() {
-        /*
-        TODO: You will implement this for the tutorial
-         */
-    }
-
     fun sendMessage(message: String) {
         /*
         TODO: You will implement this for the tutorial
          */
-
     }
 }
