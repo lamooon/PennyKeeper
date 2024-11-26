@@ -34,7 +34,7 @@ class AIService {
                         """.trimIndent())
                     })
                 }
-                // User message with data
+                // User message with appropriate data
                 put(JSONObject().apply {
                     put("role", "user")
                     put("content", message)
