@@ -9,19 +9,32 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 class AIService {
     private val client = OkHttpClient()
     private val apiKey = BuildConfig.OPENROUTER_API_KEY
     private val baseUrl = "https://openrouter.ai/api/v1/chat/completions"
 
-    suspend fun makeRequest(message: String): String {
+    suspend fun makeRequest(message: String, systemPrompt: Boolean = false): String {
         val jsonBody = JSONObject().apply {
             put("model", "meta-llama/llama-3.2-1b-instruct:free")
             put("messages", JSONArray().apply {
+                // System message to set AI's role (only once)
+                if (systemPrompt) {
+                    put(JSONObject().apply {
+                        put("role", "system")
+                        put("content", """
+                            You are a helpful financial assistant. Your role is to:
+                            1. Analyze financial data and provide insights
+                            2. Answer questions about budgeting and spending
+                            3. Give practical financial advice based on the user's spending patterns
+                            4. Be concise and direct in your responses
+                            5. Use numbers and percentages when relevant
+                            Keep responses focused on financial matters and the user's data.
+                        """.trimIndent())
+                    })
+                }
+                // User message with data
                 put(JSONObject().apply {
                     put("role", "user")
                     put("content", message)

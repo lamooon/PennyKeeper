@@ -23,7 +23,7 @@ class AppViewModelFactory(
             }
 
             modelClass.isAssignableFrom(ChatBotViewModel::class.java) -> {
-                ChatBotViewModel(aiService) as T
+                ChatBotViewModel(aiService, expenseRepository, categoryRepository) as T
             }
 
             modelClass.isAssignableFrom(EditExpenseViewModel::class.java) -> {
