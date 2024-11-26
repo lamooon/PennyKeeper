@@ -58,41 +58,4 @@ class AIService {
         }
     }
 
-    private suspend fun getResponse(request: Request): String {
-        return suspendCoroutine { continuation ->
-            try {
-                client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) {
-                        continuation.resumeWithException(
-                            RuntimeException("API call failed: ${response.code}")
-                        )
-                        return@use
-                    }
-
-                    val responseBody = response.body?.string()
-                    if (responseBody == null) {
-                        continuation.resumeWithException(
-                            RuntimeException("Empty response body")
-                        )
-                        return@use
-                    }
-
-                    try {
-                        val content = JSONObject(responseBody)
-                            .getJSONArray("choices")
-                            .getJSONObject(0)
-                            .getJSONObject("message")
-                            .getString("content")
-                        continuation.resume(content)
-                    } catch (e: Exception) {
-                        continuation.resumeWithException(
-                            RuntimeException("Failed to parse response: ${e.message}")
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                continuation.resumeWithException(e)
-            }
-        }
-    }
 }
