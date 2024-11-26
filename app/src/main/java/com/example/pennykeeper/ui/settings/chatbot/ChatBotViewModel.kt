@@ -71,4 +71,34 @@ class ChatBotViewModel(
             }
         }
     }
+
+    private fun generateGenericResponse(message: String): String {
+        // Extract highest category and amount from the message
+        val regex = "Highest spending category: (.*?) with \\$(\\d+(?:\\.\\d+)?)".toRegex()
+        val matchResult = regex.find(message)
+
+        return if (matchResult != null) {
+            val (category, amount) = matchResult.destructured
+            """
+            I'm currently offline, but I can see that your highest spending category is $category with $$amount.
+            
+            To help you manage your finances better:
+            1. Monitor this category closely
+            2. Look for ways to reduce spending if needed
+            3. Set a budget if you haven't already
+            
+            Please try again when online for more detailed analysis.
+            """.trimIndent()
+        } else {
+            """
+            I'm currently offline. When back online, I can help you with:
+            • Analyzing your spending patterns
+            • Providing budgeting advice
+            • Identifying areas for savings
+            • Answering specific financial questions
+            
+            Please check your internet connection and try again.
+            """.trimIndent()
+        }
+    }
 }
