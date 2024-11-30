@@ -1,6 +1,5 @@
 package com.example.pennykeeper.util
 
-import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.result.ActivityResultLauncher

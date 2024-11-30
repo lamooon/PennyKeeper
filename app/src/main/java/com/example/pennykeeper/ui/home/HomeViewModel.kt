@@ -29,42 +29,14 @@ class HomeViewModel(
             emptyList()
         )
 
-    private val todayExpenses = expenses.map { expenseList ->
-        expenseList.filter { isToday(it.date) }.sumOf { it.amount }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        0.0
-    )
 
     private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState = _uiState.asStateFlow()
 
     val categories = categoryRepository.categories
 
-    val totalExpenses = expenses.map { expenseList ->
-        expenseList.sumOf { it.amount }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        0.0
-    )
 
-    val monthlyExpenses = expenses.map { expenseList ->
-        val calendar = Calendar.getInstance()
-        val currentMonth = calendar.get(Calendar.MONTH)
-        val currentYear = calendar.get(Calendar.YEAR)
 
-        expenseList.filter { expense ->
-            calendar.time = expense.date
-            calendar.get(Calendar.MONTH) == currentMonth &&
-                    calendar.get(Calendar.YEAR) == currentYear
-        }.sumOf { it.amount }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        0.0
-    )
+
 
     fun addExpense(expenseUiModel: ExpenseUiModel) {
         viewModelScope.launch {
@@ -74,19 +46,11 @@ class HomeViewModel(
                 ))
                 _uiState.update { it.copy(isExpenseAdded = true) }
             } catch (e: IllegalArgumentException) {
-                // Handle category not found error
-                // You might want to add error handling in the UI state
             }
         }
     }
 
-    fun deleteExpense(expenseId: Int) {
-        viewModelScope.launch {
-            expenseRepository.getExpenseById(expenseId)?.let { expense ->
-                expenseRepository.deleteExpense(expense)
-            }
-        }
-    }
+
 
     private fun calculateNextDueDate(currentDate: Date, recurringPeriod: RecurringPeriod?): Date? {
         if (recurringPeriod == null) return null
@@ -102,9 +66,6 @@ class HomeViewModel(
         return calendar.time
     }
 
-    fun resetExpenseAddedState() {
-        _uiState.update { it.copy(isExpenseAdded = false) }
-    }
 
     fun deleteAllExpenses() {
         viewModelScope.launch {
@@ -112,12 +73,6 @@ class HomeViewModel(
         }
     }
 
-    private fun isToday(date: Date): Boolean {
-        val today = Calendar.getInstance()
-        val expenseDate = Calendar.getInstance().apply { time = date }
-        return today.get(Calendar.YEAR) == expenseDate.get(Calendar.YEAR) &&
-                today.get(Calendar.DAY_OF_YEAR) == expenseDate.get(Calendar.DAY_OF_YEAR)
-    }
 }
 
 data class HomeUiState(

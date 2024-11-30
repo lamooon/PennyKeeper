@@ -3,34 +3,27 @@ package com.example.pennykeeper.ui.stats
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.pennykeeper.data.model.Expense
 import com.example.pennykeeper.data.model.ExpenseUiModel
 import com.example.pennykeeper.data.repository.ExpenseRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.Date
 
 class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel() {
     private val _selectedPeriod = MutableStateFlow(TimePeriod.MONTH)
     val selectedPeriod = _selectedPeriod.asStateFlow()
 
     private val _currentDate = MutableStateFlow(Calendar.getInstance())
-    val currentDate = _currentDate.asStateFlow()
 
     private val _currentMonth = MutableStateFlow(_currentDate.value.get(Calendar.MONTH) + 1)
     val currentMonth = _currentMonth.asStateFlow()
 
     private val _currentWeek = MutableStateFlow(getWeekOfMonth(_currentDate.value))
-    val currentWeek = _currentWeek.asStateFlow()
 
     private val _currentYear = MutableStateFlow(_currentDate.value.get(Calendar.YEAR))
     val currentYear = _currentYear.asStateFlow()
 
     private val _weeksInCurrentMonth = MutableStateFlow(getWeeksInMonth(_currentDate.value))
-    val weeksInCurrentMonth = _weeksInCurrentMonth.asStateFlow()
 
     private val _categoryExpenses = MutableStateFlow<List<CategoryExpense>>(emptyList())
     val categoryExpenses = _categoryExpenses.asStateFlow()
@@ -94,7 +87,6 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
 
         // Set to first day of month
         clone.set(Calendar.DAY_OF_MONTH, 1)
-        val firstWeek = clone.get(Calendar.WEEK_OF_MONTH)
 
         // Set to last day of month
         clone.set(Calendar.DAY_OF_MONTH, clone.getActualMaximum(Calendar.DAY_OF_MONTH))
@@ -143,23 +135,8 @@ class StatisticsViewModel(private val repository: ExpenseRepository) : ViewModel
         updateCurrentDate(newDate)
     }
 
-    fun moveNext() {
-        val newDate = _currentDate.value.clone() as Calendar
-        when (_selectedPeriod.value) {
-            TimePeriod.MONTH -> newDate.add(Calendar.MONTH, 1)
-            TimePeriod.YEAR -> newDate.add(Calendar.YEAR, 1)
-        }
-        updateCurrentDate(newDate)
-    }
 
-    fun movePrevious() {
-        val newDate = _currentDate.value.clone() as Calendar
-        when (_selectedPeriod.value) {
-            TimePeriod.MONTH -> newDate.add(Calendar.MONTH, -1)
-            TimePeriod.YEAR -> newDate.add(Calendar.YEAR, -1)
-        }
-        updateCurrentDate(newDate)
-    }
+
 
     private fun updateStatistics(expenses: List<ExpenseUiModel>) {
         val total = expenses.sumOf { it.amount }

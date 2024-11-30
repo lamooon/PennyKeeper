@@ -1,7 +1,6 @@
 package com.example.pennykeeper
 
 import PennyKeeper
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,7 +33,7 @@ class MainActivity : ComponentActivity() {
         val categoryRepository = CategoryRepository(database.categoryDao())
         val themeRepository = ThemeRepository(applicationContext)
 
-        // Create AppViewModelFactory with required dependencies
+        // Create AppViewModelFactory
         val viewModelFactory = AppViewModelFactory(
             expenseRepository = expenseRepository,
             settingsRepository = settingsRepository,
@@ -42,7 +41,6 @@ class MainActivity : ComponentActivity() {
             themeRepository = themeRepository
         )
 
-        // Use the factory to initialize SettingsViewModel
         val settingsViewModel = ViewModelProvider(this, viewModelFactory)[SettingsViewModel::class.java]
 
         setContent {
@@ -57,7 +55,7 @@ class MainActivity : ComponentActivity() {
                     settingsRepository = settingsRepository,
                     categoryRepository = categoryRepository,
                     themeRepository = themeRepository,
-                    settingsViewModel = settingsViewModel // Pass the ViewModel to PennyKeeper
+                    settingsViewModel = settingsViewModel
                 )
             }
         }

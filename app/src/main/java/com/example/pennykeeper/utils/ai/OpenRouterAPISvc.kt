@@ -106,16 +106,8 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string() ?: throw IOException("Empty response")
 
-        // Add debug logging
-        println("Raw API Response: $responseBody")
-        println("Response Status Code: ${response.code}")
-        println("Response Headers: ${response.headers}")
-
         return try {
             val jsonResponse = JSONObject(responseBody)
-
-            // Debug log the available keys in the response
-            println("Response JSON keys: ${JSONObject(responseBody).keys().asSequence().toList()}")
 
             val content = when {
                 jsonResponse.has("candidates") -> {
@@ -134,7 +126,6 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
                         .trim()
                 }
                 else -> {
-                    println("Neither 'candidates' nor 'choices' found in response")
                     throw IOException("Unexpected response format")
                 }
             }
@@ -163,11 +154,11 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
             append("─".repeat(20))
             append("\n\n")
 
-            // First, show the AI's response
+            // show the AI's response
             append(aiResponse)
             append("\n\n")
 
-            // Then add the structured data
+            // add the structured data
             append("📊 Quick Stats:\n")
             append("• Total: ${currencyFormatter.format(total)}\n")
             append("• Transactions: ${expenses.size}\n")
@@ -191,7 +182,6 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
 
     private suspend fun parseFinancialData(context: String): Map<String, Double> {
         val expenses = mutableMapOf<String, Double>()
-        println("Parsing context: $context") // Debug log
 
         try {
             // Get all categories from the database using coroutines
@@ -213,7 +203,7 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
                         line.contains(category, ignoreCase = true)
                     }
 
-                    // Find dollar amount using regex
+                    // Find dollar sign using regex
                     val dollarAmount = "\\$\\s*([0-9]+(?:\\.[0-9]{2})?)"
                         .toRegex()
                         .find(line)
@@ -233,15 +223,12 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
                         expenses[expenseCategory] = expenses.getOrDefault(expenseCategory, 0.0) + dollarAmount
                     }
                 } catch (e: Exception) {
-                    println("Error parsing line '$line': ${e.message}")
                 }
             }
         } catch (e: Exception) {
-            println("Error in parseFinancialData: ${e.message}")
             e.printStackTrace()
         }
 
-        println("Final parsed expenses: $expenses") // Debug log
         return expenses
     }
 
@@ -262,7 +249,6 @@ class OpenRouterInferenceSvc(private val categoryRepository: CategoryRepository)
                     appendLine("• Largest expense: ${currencyFormatter.format(it.value)} (${it.key})")
                 }
 
-                // Add category breakdown
                 appendLine("\nCategory Breakdown:")
                 expenses.forEach { (category, amount) ->
                     val percentage = (amount / total * 100).toInt()

@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -75,7 +74,7 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                 .padding(bottom = 64.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp));
+            Spacer(modifier = Modifier.height(24.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

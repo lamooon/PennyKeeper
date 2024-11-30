@@ -14,7 +14,7 @@ fun PennyKeeper(
     settingsRepository: SettingsRepository,
     categoryRepository: CategoryRepository,
     themeRepository: ThemeRepository,
-    settingsViewModel: SettingsViewModel // Include the ViewModel here
+    settingsViewModel: SettingsViewModel
 ) {
     // Observe the dark mode state from SettingsViewModel
     val isDarkMode = settingsViewModel.isDarkMode.collectAsState().value
@@ -26,7 +26,7 @@ fun PennyKeeper(
             settingsRepository = settingsRepository,
             categoryRepository = categoryRepository,
             themeRepository = themeRepository,
-            settingsViewModel = settingsViewModel // Pass ViewModel to Navigation
+            settingsViewModel = settingsViewModel
         )
     }
 }
