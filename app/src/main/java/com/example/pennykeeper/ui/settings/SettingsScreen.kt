@@ -11,9 +11,10 @@ import java.text.NumberFormat
 import java.util.*
 
 fun formatCurrency(amount: Double): String {
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
+    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US) // Always use US locale
     return currencyFormatter.format(amount)
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
