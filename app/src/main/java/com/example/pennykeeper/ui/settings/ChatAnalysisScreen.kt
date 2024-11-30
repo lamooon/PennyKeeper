@@ -1,17 +1,19 @@
 package com.example.pennykeeper.ui.settings
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,14 +25,19 @@ fun ChatAnalysisScreen(
     var userInput by remember { mutableStateOf("") }
     val chatHistory by settingsViewModel.chatHistory.collectAsState()
     val isLoading by settingsViewModel.isAnalyzing.collectAsState()
+    val focusManager = LocalFocusManager.current
 
     Scaffold(
+        modifier = Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null
+        ) { focusManager.clearFocus() },
         topBar = {
             TopAppBar(
                 title = { Text("Financial Assistant") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -58,6 +65,7 @@ fun ChatAnalysisScreen(
                         onClick = {
                             settingsViewModel.sendMessage(userInput)
                             userInput = ""
+                            focusManager.clearFocus()
                         },
                         enabled = userInput.isNotBlank() && !isLoading
                     ) {
