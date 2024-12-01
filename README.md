@@ -3,4 +3,5 @@ COMP3330 Group Project
 
 
 # TODO
-- make sure to get separate API key in OpenRouter and change from api.properties.template to api.properties
+- create api.properties file if it's not in the file already
+- configure microphone on both OS and AVD
